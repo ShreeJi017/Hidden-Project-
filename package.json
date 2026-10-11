@@ -1,0 +1,24 @@
+{
+  "name": "hidden-project-",
+  "version": "1.0.0",
+  "description": "A mobile-first browser app with an animated particle orb and user-configured AI chat providers.",
+  "main": "app.js",
+  "scripts": {
+    "test": "node --test tests/phone-actions.test.js tests/image-generation.test.js tests/live-data.test.js tests/memory-services.test.js tests/android-project.test.js && node tests/validate.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ShreeJi017/Hidden-Project-.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/ShreeJi017/Hidden-Project-/issues"
+  },
+  "homepage": "https://github.com/ShreeJi017/Hidden-Project-#readme",
+  "devDependencies": {
+    "playwright": "^1.64.0"
+  }
+}

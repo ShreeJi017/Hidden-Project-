@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#111512">
+    <meta name="description" content="ZeroGravity is a calm, focused space for your next session.">
+    <title>ZeroGravity</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="ai-provider.js" defer></script>
+    <script src="live-data.js" defer></script>
+    <script src="live-data-ui.js" defer></script>
+    <script src="image-generation.js" defer></script>
+    <script src="image-generation-ui.js" defer></script>
+    <script src="voice-services.js" defer></script>
+    <script src="offline-services.js" defer></script>
+    <script src="memory-services.js" defer></script>
+    <script src="memory-ui.js" defer></script>
+    <script src="phone-actions.js" defer></script>
+    <script src="app.js" defer></script>
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <a class="wordmark" href="#screen-home" aria-label="ZeroGravity home" data-screen="home">
+          <span class="wordmark-mark" aria-hidden="true"></span>
+          <span>ZERO<span class="wordmark-light">GRAVITY</span></span>
+        </a>
+        <span class="header-index">FIELD NOTES <span>—</span> 001</span>
+        <button class="header-settings" type="button" data-screen="settings" aria-label="Open settings" title="Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.4 15 .1.1a1.8 1.8 0 0 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3 .9v.2a1.8 1.8 0 0 1-3.6 0v-.2a1.8 1.8 0 0 0-3-.9l-.1.1a1.8 1.8 0 0 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-.9-3h-.2a1.8 1.8 0 0 1 0-3.6h.2a1.8 1.8 0 0 0 .9-3l-.1-.1a1.8 1.8 0 0 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3-.9v-.2a1.8 1.8 0 0 1 3.6 0v.2a1.8 1.8 0 0 0 3 .9l.1-.1a1.8 1.8 0 0 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 .9 3h.2a1.8 1.8 0 0 1 0 3.6h-.2a1.8 1.8 0 0 0-.9 3Z"/></svg>
+        </button>
+      </header>
+
+      <main id="main-content">
+        <section class="screen home-screen" id="screen-home" aria-labelledby="home-title">
+          <div class="home-copy">
+            <p class="eyebrow"><span class="live-dot"></span> YOUR SPACE, RECENTERED</p>
+            <h1 id="home-title">A little less<br><span>gravity.</span></h1>
+            <p class="intro-copy">Find a quieter orbit. Take a breath, leave the noise outside.</p>
+            <button class="text-link" type="button" data-screen="modules">Explore Module 01 <span aria-hidden="true">↗</span></button>
+            <button class="voice-button home-voice-button" id="home-voice-input" type="button" aria-label="Start voice input">
+              <span aria-hidden="true">◉</span><span class="voice-button-copy">Start voice input</span>
+            </button>
+            <p class="home-voice-status" id="home-voice-status" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="orb-column">
+            <div class="orb-stage" id="orb-stage">
+              <div class="orb-halo" aria-hidden="true"></div>
+              <canvas id="particle-orb" role="img" aria-label="An animated sphere of glowing particles"></canvas>
+              <div class="orb-coordinate" aria-hidden="true">ZG — 01</div>
+              <div class="orb-caption"><span>VISUAL CORE</span><span>01 / 01</span></div>
+            </div>
+            <div class="orb-status"><span class="status-dot"></span><span>FIELD STABLE</span><span class="status-divider">/</span><span id="orb-voice-state">IDLE</span><span class="status-divider">·</span><span id="orb-listening-mode">DISABLED</span></div>
+          </div>
+        </section>
+
+        <section class="screen content-screen" id="screen-modules" aria-labelledby="modules-title" hidden>
+          <div class="content-heading">
+            <p class="eyebrow"><span class="live-dot"></span> YOUR TOOLKIT</p>
+            <h1 id="modules-title">Modules</h1>
+            <p class="intro-copy">One small space to begin.</p>
+          </div>
+          <article class="module-row">
+            <div class="module-number">01</div>
+            <div class="module-copy">
+              <p class="eyebrow">VISUAL CORE</p>
+              <h2>ZeroGravity field</h2>
+              <p>A softly moving point of focus, made to give your attention somewhere to land.</p>
+            </div>
+            <button class="round-arrow" type="button" data-screen="home" aria-label="Open Visual Core" title="Open Visual Core"><span aria-hidden="true">↗</span></button>
+            <span class="module-state"><span class="status-dot"></span> ACTIVE</span>
+          </article>
+          <article class="module-row chat-module-row">
+            <div class="module-number">03</div>
+            <div class="module-copy">
+              <p class="eyebrow">AI ENGINE</p>
+              <h2>AI conversation</h2>
+              <p>Connect your own compatible API provider to start a conversation.</p>
+            </div>
+            <button class="round-arrow" type="button" data-screen="chat" aria-label="Open AI conversation" title="Open AI conversation"><span aria-hidden="true">↗</span></button>
+          </article>
+          <article class="module-row">
+            <div class="module-number">10</div>
+            <div class="module-copy">
+              <p class="eyebrow">IMAGE STUDIO</p>
+              <h2>Image Generator</h2>
+              <p>Generate images with a provider configured for Image Generation in Own API.</p>
+            </div>
+            <button class="round-arrow" type="button" data-screen="image-generator" aria-label="Open Image Generator" title="Open Image Generator"><span aria-hidden="true">↗</span></button>
+          </article>
+          <article class="module-row">
+            <div class="module-number">10</div>
+            <div class="module-copy">
+              <p class="eyebrow">IMAGE STUDIO</p>
+              <h2>Image Gallery</h2>
+              <p>Review, download, and retry images saved by this browser or Android app.</p>
+            </div>
+            <button class="round-arrow" type="button" data-screen="image-gallery" aria-label="Open Image Gallery" title="Open Image Gallery"><span aria-hidden="true">↗</span></button>
+          </article>
+          <article class="module-row">
+            <div class="module-number">11</div>
+            <div class="module-copy">
+              <p class="eyebrow">LIVE INTERNET</p>
+              <h2>Search &amp; Wikipedia</h2>
+              <p>Find current web sources or browse clearly labelled Wikipedia summaries.</p>
+            </div>
+            <button class="round-arrow" type="button" data-screen="live-search" aria-label="Open Search and Wikipedia" title="Open Search and Wikipedia"><span aria-hidden="true">↗</span></button>
+          </article>
+          <article class="module-row">
+            <div class="module-number">11</div>
+            <div class="module-copy">
+              <p class="eyebrow">DAILY INFORMATION</p>
+              <h2>Weather &amp; Local time</h2>
+              <p>View provider-sourced forecasts and your device’s local date and time.</p>
+            </div>
+            <button class="round-arrow" type="button" data-screen="weather" aria-label="Open Weather and Local time" title="Open Weather and Local time"><span aria-hidden="true">↗</span></button>
+          </article>
+          <article class="module-row">
+            <div class="module-number">12</div>
+            <div class="module-copy">
+              <p class="eyebrow">PERSONAL SPACE</p>
+              <h2>Memory &amp; Personalization</h2>
+              <p>Review saved memories, privacy choices, response preferences, and Calm Mode.</p>
+            </div>
+            <button class="round-arrow" type="button" data-screen="memory" aria-label="Open Memory and Personalization" title="Open Memory and Personalization"><span aria-hidden="true">↗</span></button>
+          </article>
+        </section>
+
+        <section class="screen content-screen chat-screen" id="screen-chat" aria-labelledby="chat-title" hidden>
+          <div class="chat-heading">
+            <div class="content-heading">
+              <p class="eyebrow"><span class="live-dot"></span> MODULE 03 · AI ENGINE</p>
+              <h1 id="chat-title">Conversation</h1>
+              <p class="intro-copy">Route each message through a local tool, an installed local model, or your configured online provider.</p>
+            </div>
+            <button class="secondary-button" id="new-conversation" type="button">New conversation</button>
+          </div>
+          <div class="chat-toolbar">
+            <label for="conversation-history">History</label>
+            <select id="conversation-history" aria-label="Conversation history"></select>
+            <span class="voice-toolbar-actions">
+              <span class="listening-mode-indicator">Mode · <span id="voice-mode-state">Disabled</span></span>
+              <span id="voice-state" class="voice-state" aria-live="polite">Idle</span>
+              <label class="private-mode-toggle"><input id="private-conversation-mode" type="checkbox"> Private</label>
+              <button class="secondary-button voice-stop-button" id="stop-voice" type="button">Stop voice</button>
+            </span>
+          </div>
+          <div class="chat-quick-actions" aria-label="Response assistance">
+            <button class="secondary-button" id="make-simpler" type="button">Make this simpler</button>
+            <button class="secondary-button" id="one-step-at-a-time" type="button">One step at a time</button>
+          </div>
+          <p class="chat-notice" id="chat-notice" role="status" aria-live="polite">No provider configured. Add one in Settings → Own API to begin.</p>
+          <div class="chat-messages" id="chat-messages" role="log" aria-live="polite" aria-relevant="additions text"></div>
+          <form class="chat-composer" id="chat-form">
+            <label class="visually-hidden" for="chat-input">Your message</label>
+            <textarea id="chat-input" rows="1" maxlength="12000" placeholder="Write a message…" required></textarea>
+            <button class="voice-button chat-voice-button" id="chat-voice-input" type="button" aria-label="Start voice input" title="Start voice input">
+              <span aria-hidden="true">◉</span><span class="voice-button-label">Voice</span>
+            </button>
+            <button class="send-button" id="send-message" type="submit">Send <span aria-hidden="true">↗</span></button>
+          </form>
+          <p class="chat-footnote">Messages are saved in this browser on this device.</p>
+        </section>
+
+        <section class="screen content-screen memory-screen" id="screen-memory" aria-labelledby="memory-title" hidden>
+          <div class="content-heading">
+            <p class="eyebrow"><span class="live-dot"></span> MODULE 12 · PERSONAL SPACE</p>
+            <h1 id="memory-title">Memory &amp;<br>Personalization</h1>
+            <p class="intro-copy">You choose what to save, what to use, and what may be shared.</p>
+          </div>
+          <p class="memory-privacy-note">Memories are stored in this browser on this device and are not encrypted. Browser storage can be read by scripts running on this site, browser extensions, or anyone with access to this browser profile. No backend or encrypted Android memory storage is connected. Passwords, API keys, tokens, and secrets are rejected. Sensitive details require your confirmation.</p>
+          <div class="memory-settings-list" aria-label="Memory and personalization settings">
+            <div class="setting-row">
+              <div class="setting-copy"><h2>Memory</h2><p>Allow saved memories to be managed and used by this device.</p></div>
+              <label class="switch"><input id="memory-enabled" type="checkbox" aria-label="Enable memory"><span class="switch-track" aria-hidden="true"></span></label>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h2>Personalization</h2><p>Use your selected language, response length, and saved context.</p></div>
+              <label class="switch"><input id="personalization-enabled" type="checkbox" aria-label="Enable personalization"><span class="switch-track" aria-hidden="true"></span></label>
+            </div>
+            <div class="setting-row">
+              <div class="setting-copy"><h2>Calm Mode</h2><p>Use gentle, clear language, manageable steps, and slower speech where supported.</p></div>
+              <label class="switch"><input id="calm-mode-enabled" type="checkbox" aria-label="Enable Calm Mode"><span class="switch-track" aria-hidden="true"></span></label>
+            </div>
+          </div>
+          <section class="memory-preferences" aria-labelledby="memory-preferences-title">
+            <h2 id="memory-preferences-title">Response preferences</h2>
+            <div class="memory-preference-grid">
+              <label class="form-field" for="personalization-language"><span>Preferred language <small>Optional</small></span><input id="personalization-language" type="text" maxlength="80" placeholder="For example, English or Hindi"></label>
+              <label class="form-field" for="personalization-length"><span>Response length</span><select id="personalization-length"><option value="balanced">Balanced</option><option value="brief">Brief</option><option value="detailed">Detailed</option></select></label>
+            </div>
+          </section>
+          <section class="memory-sharing" aria-labelledby="memory-sharing-title">
+            <h2 id="memory-sharing-title">Online AI sharing</h2>
+            <p id="memory-privacy-status">No saved memories are included in online AI requests.</p>
+            <label class="memory-sharing-toggle"><input id="online-memory-enabled" type="checkbox"> Allow selected preferences and memories in online AI requests</label>
+            <p class="api-provider-note">Sharing is off by default and never used in Offline-only or Private mode. Turning this on is not enough by itself: each saved memory must also be individually marked “Share eligible.” Response preferences are shared only when Personalization is enabled. Check your configured AI provider’s privacy and retention terms.</p>
+          </section>
+          <div class="memory-actions">
+            <button class="secondary-button" id="reset-personalization" type="button">Reset personalization settings</button>
+          </div>
+          <section class="memory-list-section" aria-labelledby="memory-list-title">
+            <div class="memory-list-heading">
+              <div><h2 id="memory-list-title">Saved memories</h2><p id="memory-count" aria-live="polite">Loading memories…</p></div>
+              <button class="primary-button" id="memory-add" type="button">Add memory</button>
+            </div>
+            <label class="form-field memory-search-field" for="memory-search"><span>Search saved memories</span><input id="memory-search" type="search" autocomplete="off" placeholder="Search text or category"></label>
+            <div id="memory-list" class="memory-list" aria-live="polite"></div>
+            <p id="memory-list-empty" class="memory-list-empty" hidden>No saved memories yet. Use “Remember this: …” in chat or add one here.</p>
+            <p id="memory-storage-status" class="memory-storage-status"></p>
+            <div class="memory-actions">
+              <button class="secondary-button" id="memory-export" type="button">Export JSON</button>
+              <button class="secondary-button" id="memory-import" type="button">Import JSON</button>
+              <input id="memory-import-file" type="file" accept="application/json,.json" hidden>
+              <button class="secondary-button" id="memory-clear-all" type="button">Clear all memories</button>
+            </div>
+            <p id="memory-settings-status" class="voice-settings-status" role="status" aria-live="polite"></p>
+          </section>
+          <p class="api-provider-note">Private conversation mode prevents chat commands from saving memories. It does not clear chat history. Browser memory is available offline; the app does not contain an offline language model unless a compatible native model is separately connected. Calm Mode is a user-selected style, not emotion diagnosis.</p>
+        </section>
+
+        <dialog id="memory-edit-dialog" class="memory-edit-dialog" aria-labelledby="memory-edit-title">
+          <div class="memory-dialog-header">
+            <h2 id="memory-edit-title">Add saved memory</h2>
+            <button class="secondary-button" id="memory-close-editor" type="button">Cancel</button>
+          </div>
+          <form id="memory-edit-form">
+            <input id="memory-edit-id" type="hidden">
+            <label class="form-field" for="memory-edit-content"><span>Memory text</span><textarea id="memory-edit-content" rows="4" maxlength="2000" required></textarea></label>
+            <label class="form-field" for="memory-edit-category"><span>Category</span>
+              <select id="memory-edit-category">
+                <option value="preference">Preference</option><option value="language">Language</option>
+                <option value="communication-style">Communication style</option><option value="response-length">Response length</option>
+                <option value="feature">Frequently used feature</option><option value="goal">Goal</option>
+                <option value="project">Project</option><option value="fact">Fact</option><option value="context">Context</option>
+              </select>
+            </label>
+            <label class="form-field" for="memory-edit-expiration"><span>Optional expiration date</span><input id="memory-edit-expiration" type="date"></label>
+            <label class="memory-sharing-toggle"><input id="memory-edit-online" type="checkbox"> Mark this memory eligible for online sharing</label>
+            <p class="api-provider-note">Credentials and secrets are not allowed. Sensitive personal information requires separate confirmation before saving.</p>
+            <button class="primary-button" type="submit">Save memory</button>
+          </form>
+        </dialog>
+
+        <section class="screen content-screen image-screen" id="screen-image-generator" aria-labelledby="image-generator-title" hidden>
+          <div class="content-heading">
+            <p class="eyebrow"><span class="live-dot"></span> MODULE 10 · IMAGE STUDIO</p>
+            <h1 id="image-generator-title">Image<br>Generator</h1>
+            <p class="intro-copy">Send a real request to the enabled Image Generation provider selected in Own API.</p>
+          </div>
+          <div class="image-generator-layout">
+            <form id="image-generation-form" class="image-generation-form">
+              <p id="image-provider-status" class="image-provider-status" role="status" aria-live="polite"></p>
+              <label class="form-field" for="image-prompt">
+                <span>Prompt <small>Required</small></span>
+                <textarea id="image-prompt" rows="5" maxlength="4000" required placeholder="Describe the image you want to create…"></textarea>
+              </label>
+              <label class="form-field" for="image-negative-prompt" id="image-negative-field">
+                <span>Negative prompt <small id="image-negative-support">Only when supported by provider</small></span>
+                <textarea id="image-negative-prompt" rows="2" maxlength="2000" placeholder="Elements to exclude…"></textarea>
+              </label>
+              <div class="image-options-grid">
+                <label class="form-field" for="image-aspect-ratio">
+                  <span>Aspect ratio</span>
+                  <select id="image-aspect-ratio">
+                    <option value="1:1">1:1 · Square</option>
+                    <option value="9:16">9:16 · Portrait</option>
+                    <option value="16:9">16:9 · Landscape</option>
+                    <option value="4:3">4:3 · Classic</option>
+                  </select>
+                </label>
+                <label class="form-field" for="image-quality" id="image-quality-field">
+                  <span>Quality</span>
+                  <select id="image-quality">
+                    <option value="">Provider default</option>
+                    <option value="standard">Standard</option>
+                    <option value="hd">HD</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </select>
+                </label>
+                <label class="form-field" for="image-style" id="image-style-field">
+                  <span>Style</span>
+                  <select id="image-style">
+                    <option value="">Provider default</option>
+                    <option value="natural">Natural</option>
+                    <option value="vivid">Vivid</option>
+                  </select>
+                </label>
+              </div>
+              <div class="image-actions">
+                <button class="primary-button" id="generate-image" type="submit">Generate image</button>
+                <button class="secondary-button" id="cancel-image-generation" type="button" disabled>Cancel</button>
+                <button class="secondary-button" id="retry-image-generation" type="button" disabled>Retry</button>
+                <button class="secondary-button" id="clear-image-generation" type="button">Clear</button>
+              </div>
+              <p id="image-generation-status" class="voice-settings-status" role="status" aria-live="polite"></p>
+            </form>
+            <section id="image-result" class="image-result" aria-label="Generated image" hidden>
+              <img id="image-result-preview" alt="Generated result">
+              <p id="image-result-details" class="image-result-details"></p>
+              <div class="image-actions">
+                <button class="secondary-button" id="download-generated-image" type="button">Download</button>
+                <button class="secondary-button" id="share-generated-image" type="button" hidden>Share</button>
+                <button class="secondary-button android-save-image" id="save-generated-image" type="button" hidden>Save to device</button>
+                <button class="secondary-button" id="open-image-gallery" type="button" data-screen="image-gallery">Open gallery</button>
+              </div>
+            </section>
+          </div>
+          <p class="api-provider-note">Provider progress is unavailable for the configured request protocol, so generation shows an indeterminate status. Remote URLs may expire. Locally returned image files are stored in IndexedDB; gallery metadata only is stored in browser storage. Browser downloads and sharing depend on device/browser support; this web page cannot silently save into arbitrary folders. The native Android app uses MediaStore on Android 10+.</p>
+        </section>
+
+        <section class="screen content-screen image-screen" id="screen-image-gallery" aria-labelledby="image-gallery-title" hidden>
+          <div class="content-heading image-gallery-heading">
+            <div>
+              <p class="eyebrow"><span class="live-dot"></span> MODULE 10 · IMAGE STUDIO</p>
+              <h1 id="image-gallery-title">Image Gallery</h1>
+              <p class="intro-copy">Your saved image history on this device.</p>
+            </div>
+            <button class="secondary-button" type="button" data-screen="image-generator">Create image</button>
+          </div>
+          <p id="image-gallery-status" class="voice-settings-status" role="status" aria-live="polite"></p>
+          <div id="image-gallery-grid" class="image-gallery-grid"></div>
+          <p id="image-gallery-empty" class="image-gallery-empty" hidden>No images saved yet. Create one to start your gallery.</p>
+        </section>
+
+        <section class="screen content-screen live-screen" id="screen-live-search" aria-labelledby="live-search-title" hidden>
+          <div class="content-heading">
+            <p class="eyebrow"><span class="live-dot"></span> MODULE 11 · LIVE INTERNET</p>
+            <h1 id="live-search-title">Search &amp;<br>Wikipedia</h1>
+            <p class="intro-copy">Search real web sources or browse Wikipedia articles. Results are displayed separately and linked to their sources.</p>
+          </div>
+          <section class="live-panel" aria-labelledby="web-search-title">
+            <div class="live-panel-heading">
+              <div>
+                <p class="eyebrow">GENERAL WEB</p>
+                <h2 id="web-search-title">Live web search</h2>
+              </div>
+              <button class="secondary-button" id="retry-live-search" type="button" disabled>Retry</button>
+            </div>
+            <form id="live-search-form" class="live-query-form">
+              <label class="form-field" for="live-search-query">
+                <span>Search the latest information</span>
+                <input id="live-search-query" type="search" maxlength="500" required placeholder="Search a topic…">
+              </label>
+              <button class="primary-button" type="submit">Search web</button>
+            </form>
+            <p id="live-search-status" class="voice-settings-status" role="status" aria-live="polite"></p>
+            <div id="live-search-results" class="live-results" aria-live="polite"></div>
+          </section>
+          <section class="live-panel wikipedia-panel" aria-labelledby="wikipedia-title">
+            <div class="live-panel-heading">
+              <div>
+                <p class="eyebrow">ENCYCLOPEDIA · PUBLIC API</p>
+                <h2 id="wikipedia-title">Wikipedia</h2>
+              </div>
+            </div>
+            <form id="wikipedia-search-form" class="live-query-form">
+              <label class="form-field" for="wikipedia-query">
+                <span>Search Wikipedia articles</span>
+                <input id="wikipedia-query" type="search" maxlength="300" required placeholder="Article or topic…">
+              </label>
+              <button class="secondary-button" type="submit">Search Wikipedia</button>
+            </form>
+            <p id="wikipedia-status" class="voice-settings-status" role="status" aria-live="polite"></p>
+            <div id="wikipedia-results" class="live-results wikipedia-results" aria-live="polite"></div>
+          </section>
+        </section>
+
+        <section class="screen content-screen live-screen weather-screen" id="screen-weather" aria-labelledby="weather-title" hidden>
+          <div class="content-heading">
+            <p class="eyebrow"><span class="live-dot"></span> MODULE 11 · DAILY INFORMATION</p>
+            <h1 id="weather-title">Weather &amp;<br>Local time</h1>
+            <p class="intro-copy">Weather and forecasts come only from the selected Own API weather provider. Local time comes from this device.</p>
+          </div>
+          <section class="live-panel local-clock-panel" aria-label="Device date and time">
+            <p class="eyebrow">DEVICE LOCAL TIME</p>
+            <time id="local-date-time" datetime="">Loading local time…</time>
+          </section>
+          <section class="live-panel" aria-labelledby="weather-dashboard-title">
+            <div class="live-panel-heading weather-panel-heading">
+              <div>
+                <p class="eyebrow">LIVE WEATHER DASHBOARD</p>
+                <h2 id="weather-dashboard-title">Your forecast</h2>
+              </div>
+              <label class="form-field weather-units-field" for="weather-units">
+                <span>Temperature units</span>
+                <select id="weather-units">
+                  <option value="celsius">Celsius (°C)</option>
+                  <option value="fahrenheit">Fahrenheit (°F)</option>
+                </select>
+              </label>
+            </div>
+            <p class="voice-capability-note">Choose a city manually, or request your device location. Location is requested only after you tap Use my location and confirm; coordinates are sent to the configured weather provider.</p>
+            <form id="weather-city-form" class="live-query-form">
+              <label class="form-field" for="weather-city">
+                <span>City</span>
+                <input id="weather-city" type="search" maxlength="120" autocomplete="address-level2" placeholder="Enter a city, e.g. Lucknow">
+              </label>
+              <button class="primary-button" id="weather-city-submit" type="submit">Show weather</button>
+              <button class="secondary-button" id="weather-location" type="button">Use my location</button>
+              <button class="secondary-button" id="weather-retry" type="button">Refresh</button>
+            </form>
+            <p id="weather-status" class="voice-settings-status" role="status" aria-live="polite"></p>
+            <div id="weather-current" class="weather-current" hidden></div>
+            <div id="weather-sun" class="weather-sun" hidden></div>
+            <section id="weather-hourly-section" class="weather-forecast-section" hidden aria-labelledby="weather-hourly-title">
+              <h3 id="weather-hourly-title">Hourly forecast</h3>
+              <div id="weather-hourly" class="weather-hourly"></div>
+            </section>
+            <section id="weather-daily-section" class="weather-forecast-section" hidden aria-labelledby="weather-daily-title">
+              <h3 id="weather-daily-title">7-day forecast</h3>
+              <div id="weather-daily" class="weather-daily"></div>
+            </section>
+            <section id="weather-alerts-section" class="weather-forecast-section" hidden aria-labelledby="weather-alerts-title">
+              <h3 id="weather-alerts-title">Weather alerts</h3>
+              <div id="weather-alerts"></div>
+            </section>
+          </section>
+          <p class="api-provider-note">Weather is not included in the offline AI model. Offline-only may show the last saved forecast with its original timestamp and an outdated-data label, never as live conditions. Without a configured provider, use Settings → Own API to set up Open-Meteo (public, no key) or a custom weather JSON API.</p>
+        </section>
+
+        <dialog id="image-detail-dialog" class="image-detail-dialog">
+          <div class="image-detail-header">
+            <h2>Image details</h2>
+            <button class="secondary-button" id="close-image-detail" type="button">Close</button>
+          </div>
+          <img id="image-detail-preview" alt="Selected gallery image">
+          <dl id="image-detail-metadata" class="image-detail-metadata"></dl>
+          <div class="image-actions">
+            <button class="secondary-button" id="copy-image-prompt" type="button">Copy prompt</button>
+            <button class="secondary-button" id="retry-gallery-image" type="button">Retry prompt</button>
+            <button class="secondary-button" id="download-gallery-image" type="button">Download</button>
+            <button class="secondary-button" id="share-gallery-image" type="button" hidden>Share</button>
+            <button class="secondary-button android-save-image" id="save-gallery-image" type="button" hidden>Save to device</button>
+            <button class="secondary-button" id="delete-gallery-image" type="button">Delete</button>
+          </div>
+          <p id="image-detail-status" class="voice-settings-status" role="status" aria-live="polite"></p>
+        </dialog>
+
+        <section class="screen content-screen settings-screen" id="screen-settings" aria-labelledby="settings-title" hidden>
+          <div class="content-heading">
+            <p class="eyebrow"><span class="live-dot"></span> MAKE IT YOURS</p>
+            <h1 id="settings-title">Settings</h1>
+            <p class="intro-copy">A few ways to settle into your space.</p>
+          </div>
+          <div class="settings-list">
+            <div class="setting-row">
+              <div class="setting-copy">
+                <h2>Reduced motion</h2>
+                <p>Keep the field still and conserve battery.</p>
+              </div>
+              <label class="switch">
+                <input id="motion-setting" type="checkbox" aria-label="Reduce motion">
+                <span class="switch-track" aria-hidden="true"></span>
+              </label>
+            </div>
+            <div class="setting-row glow-setting">
+              <div class="setting-copy">
+                <h2>Orb brightness</h2>
+                <p>Adjust the glow to suit your surroundings.</p>
+              </div>
+              <div class="range-control">
+                <input id="glow-setting" type="range" min="30" max="100" step="5" value="75" aria-label="Orb brightness">
+                <output id="glow-value" for="glow-setting">75%</output>
+              </div>
+            </div>
+          </div>
+          <section class="offline-settings" aria-labelledby="offline-settings-title">
+            <div class="own-api-heading">
+              <div>
+                <p class="eyebrow">MODULE 08 · LOCAL-FIRST ROUTING</p>
+                <h2 id="offline-settings-title">Offline mode</h2>
+              </div>
+              <span class="listening-mode-indicator">Mode · <strong id="offline-mode-state">Automatic</strong></span>
+            </div>
+            <p class="voice-capability-note">Automatic uses supported local tools first, then the configured online provider. Offline-only never sends AI chat or provider-test requests online. Online-only sends chat to the configured provider. Mode changes apply to new requests; an online request already in progress cannot be recalled.</p>
+            <label class="form-field offline-mode-field" for="offline-mode-setting">
+              <span>AI request mode</span>
+              <select id="offline-mode-setting">
+                <option value="automatic">Automatic · local first, online fallback</option>
+                <option value="online-only">Online-only · configured provider</option>
+                <option value="offline-only">Offline-only · local tools or loaded model</option>
+              </select>
+            </label>
+            <div class="offline-status-grid" aria-live="polite">
+              <p>Network <strong id="offline-network-status">Checking…</strong></p>
+              <p>AI availability <strong id="offline-ai-status">Checking…</strong></p>
+              <p>Local model <strong id="local-model-status">No inference engine installed</strong></p>
+            </div>
+            <div class="local-model-panel">
+              <h3>On-device model</h3>
+              <p id="local-model-detail">No compatible on-device inference engine or installed model is available. Browser speech APIs are not local AI inference. Models are never downloaded automatically.</p>
+              <label class="form-field" for="local-model-select">
+                <span>Installed model</span>
+                <select id="local-model-select" disabled>
+                  <option value="">No installed models</option>
+                </select>
+              </label>
+              <div class="offline-actions">
+                <button class="secondary-button" id="discover-local-models" type="button">Check local models</button>
+                <button class="secondary-button" id="load-local-model" type="button" disabled>Load selected model</button>
+                <button class="secondary-button" id="unload-local-model" type="button" disabled>Unload model</button>
+              </div>
+              <p class="voice-settings-status" id="local-model-message" role="status" aria-live="polite"></p>
+              <p class="api-provider-note">A future native engine must discover/import a compatible model and check available RAM and storage before loading. Downloads require a separate explicit confirmation. Local wake-word detection, offline STT, and local TTS are not provided by this web app.</p>
+            </div>
+            <div class="local-memory-panel">
+              <label class="form-field" for="local-memory-input">
+                <span>Local memory</span>
+                <textarea id="local-memory-input" rows="3" maxlength="2000" placeholder="Optional note stored only in this browser on this device."></textarea>
+              </label>
+              <p class="api-provider-note">Memory is saved only when you choose Save local memory, or explicitly ask chat to “remember that …”. It is never automatically added to online prompts.</p>
+              <div class="offline-actions">
+                <button class="secondary-button" id="save-local-memory" type="button">Save local memory</button>
+                <button class="secondary-button" id="clear-local-memory" type="button">Clear local memory</button>
+                <button class="secondary-button" id="clear-local-history" type="button">Clear conversation history</button>
+              </div>
+              <p class="voice-settings-status" id="local-data-message" role="status" aria-live="polite"></p>
+            </div>
+          </section>
+          <section class="phone-actions" aria-labelledby="phone-actions-title">
+            <div class="own-api-heading">
+              <div>
+                <p class="eyebrow">MODULE 09 · EXPLICIT ANDROID ACTIONS</p>
+                <h2 id="phone-actions-title">Phone Actions</h2>
+              </div>
+              <span class="listening-mode-indicator">Bridge · <strong id="phone-bridge-state">Checking…</strong></span>
+            </div>
+            <p class="voice-capability-note">Commands from chat or speech are checked before AI routing. An ordinary browser cannot control Android. Sensitive Android actions require confirmation; calls also require Android’s call permission. Text commands only open a prefilled messaging draft; ZeroGravity never sends SMS. Calendar commands open a draft in a calendar app for you to save. Notification text is shown only after you grant Android notification-listener access.</p>
+            <div class="phone-capability-list" id="phone-capability-list" aria-live="polite"></div>
+            <form class="phone-command-form" id="phone-command-form">
+              <label class="form-field" for="phone-command-input">
+                <span>Test a command</span>
+                <input id="phone-command-input" type="text" maxlength="500" autocomplete="off" placeholder="Open Android settings">
+              </label>
+              <button class="primary-button" id="run-phone-command" type="submit">Run command</button>
+            </form>
+            <p class="voice-settings-status" id="phone-command-status" role="status" aria-live="polite"></p>
+            <div class="phone-command-history">
+              <div class="phone-command-history-heading">
+                <h3>Recent commands</h3>
+                <button class="secondary-button" id="clear-phone-command-history" type="button">Clear</button>
+              </div>
+              <ol id="phone-command-history-list"></ol>
+            </div>
+          </section>
+          <section class="own-api" aria-labelledby="own-api-title">
+            <div class="own-api-heading">
+              <div>
+                <p class="eyebrow">MODULE 07 · PROVIDER ROUTING</p>
+                <h2 id="own-api-title">Own API</h2>
+              </div>
+            </div>
+            <p class="api-security-warning"><strong>Development-only direct browser requests.</strong> This app has no secure backend proxy. API keys, custom header values, custom static bodies, and arbitrary request settings are held in page memory only; they are not saved in browser storage and are lost when the page reloads. Allow-listed non-secret image, search, and weather field mappings may be saved with provider metadata. A browser key can still be exposed to scripts, extensions, network tooling, or anyone with access to this active session. For production or sensitive use, route requests through a trusted backend. Never put credentials in endpoint URLs.</p>
+            <div class="provider-dashboard-heading">
+              <div>
+                <h3>Provider dashboard</h3>
+                <p>Choose separate providers for each function. Only adapters listed as available execute requests.</p>
+              </div>
+              <button class="primary-button" id="new-provider" type="button">Add provider</button>
+            </div>
+            <div class="provider-dashboard" id="provider-dashboard" aria-live="polite"></div>
+            <section class="provider-editor" id="provider-editor" aria-labelledby="provider-editor-title" hidden>
+              <div class="own-api-heading">
+                <div>
+                  <p class="eyebrow">DIRECT-BROWSER · SESSION ONLY</p>
+                  <h3 id="provider-editor-title">Provider configuration</h3>
+                </div>
+                <button class="secondary-button" id="cancel-provider-edit" type="button">Cancel</button>
+              </div>
+            <div class="api-provider-selectors">
+              <label class="form-field">
+                <span>Function</span>
+                <select id="provider-function-select" aria-label="Provider function"></select>
+              </label>
+              <label class="form-field">
+                <span>Provider type</span>
+                <select id="provider-type-select" aria-label="Provider type"></select>
+              </label>
+              <label class="form-field">
+                <span>Configuration to edit</span>
+                <select id="provider-config-select" aria-label="Provider configuration"></select>
+              </label>
+              <label class="form-field">
+                <span>Default provider</span>
+                <select id="active-provider-select" aria-label="Select the default provider"></select>
+              </label>
+            </div>
+            <div class="api-form-grid">
+              <label class="form-field">
+                <span>Provider name</span>
+                <input id="provider-name" type="text" maxlength="60" autocomplete="off" placeholder="My AI provider">
+              </label>
+              <label class="form-field">
+                <span>Model name</span>
+                <input id="provider-model" type="text" maxlength="120" autocomplete="off" placeholder="model-name">
+              </label>
+              <label class="form-field api-endpoint-field">
+                <span>API endpoint</span>
+                <input id="provider-endpoint" type="url" maxlength="1000" autocomplete="url" placeholder="https://api.example.com/v1/chat/completions">
+              </label>
+              <label class="form-field api-key-field">
+                <span>API key <small id="provider-key-status"></small></span>
+                <span class="secret-input">
+                  <input id="provider-key" type="password" maxlength="2000" autocomplete="new-password" placeholder="Entered for this page session only">
+                  <button class="secondary-button" id="toggle-provider-key" type="button" aria-label="Show API key">Show</button>
+                </span>
+              </label>
+              <label class="form-field">
+                <span>Custom headers (JSON object; session only)</span>
+                <textarea id="provider-headers" rows="3" maxlength="5000" spellcheck="false" placeholder='{"X-Client-Name":"ZeroGravity"}'></textarea>
+              </label>
+              <label class="form-field">
+                <span>Optional request settings (JSON object)</span>
+                <textarea id="provider-request-settings" rows="3" maxlength="5000" spellcheck="false" placeholder='{"timeoutMs":30000}'></textarea>
+              </label>
+            </div>
+            <div class="provider-editor-options">
+              <label class="enable-provider">
+                <input id="provider-enabled" type="checkbox">
+                <span>Enable provider</span>
+              </label>
+              <label class="enable-provider">
+                <input id="provider-is-default" type="checkbox">
+                <span>Set as default</span>
+              </label>
+              <label class="enable-provider">
+                <input id="provider-is-backup" type="checkbox">
+                <span>Use as backup</span>
+              </label>
+              <label class="form-field">
+                <span>Priority</span>
+                <select id="provider-priority" aria-label="Provider priority">
+                  <option value="1">1 · Highest</option>
+                  <option value="2">2</option>
+                  <option value="3">3</option>
+                  <option value="4">4</option>
+                  <option value="5">5 · Lowest</option>
+                </select>
+              </label>
+            </div>
+            <p class="api-settings-status" id="api-settings-status" role="status" aria-live="polite"></p>
+            <div class="api-actions">
+              <button class="secondary-button" id="test-provider" type="button">Test connection</button>
+              <button class="primary-button" id="save-provider" type="button">Save configuration</button>
+              <button class="secondary-button" id="delete-provider" type="button">Delete configuration</button>
+            </div>
+            <p class="api-provider-note" id="provider-adapter-note"></p>
+            </section>
+            <p class="api-provider-note">Provider requests originate in this browser and require provider CORS support. No connection result is assumed: use Test connection. Automatic fallback is attempted only between configured Chat Completions-compatible Chat AI providers.</p>
+          </section>
+          <section class="voice-settings" aria-labelledby="voice-settings-title">
+            <div class="own-api-heading">
+              <div>
+                <p class="eyebrow">MODULE 04 · 05</p>
+                <h2 id="voice-settings-title">Voice</h2>
+              </div>
+              <span id="voice-settings-state" class="voice-state" aria-live="polite">Idle</span>
+            </div>
+            <p class="voice-capability-note">Voice input uses browser speech recognition when available. Microphone access starts only after you tap Start voice input. Recognition is browser-managed and may be processed by the browser vendor; this app does not store recordings or forward audio to the AI provider. Browser and device support varies. Speech playback uses voices available on this device. Automatic interruption by background speech or noise is not supported.</p>
+            <div class="voice-setting-row">
+              <div class="setting-copy">
+                <h3>Enable spoken replies</h3>
+                <p>Read AI replies aloud after they arrive.</p>
+              </div>
+              <label class="switch">
+                <input id="voice-replies-setting" type="checkbox" aria-label="Enable spoken replies">
+                <span class="switch-track" aria-hidden="true"></span>
+              </label>
+            </div>
+            <div class="voice-settings-controls">
+              <label class="form-field voice-rate-field">
+                <span>Speech rate <output id="voice-rate-value" for="voice-rate-setting">1.0×</output></span>
+                <input id="voice-rate-setting" type="range" min="0.7" max="1.3" step="0.1" value="1">
+              </label>
+              <label class="form-field">
+                <span>Voice (when supported)</span>
+                <select id="voice-selection" aria-label="Speech voice"></select>
+              </label>
+            </div>
+            <div class="voice-actions">
+              <button class="secondary-button voice-settings-toggle" id="settings-voice-input" type="button">Start voice input</button>
+              <button class="secondary-button voice-stop-button" id="settings-stop-voice" type="button">Stop speech / input</button>
+            </div>
+            <p class="voice-settings-status" id="voice-settings-status" role="status" aria-live="polite"></p>
+            <section class="wake-word-settings" aria-labelledby="wake-word-title">
+              <div class="own-api-heading">
+                <div>
+                  <p class="eyebrow">MODULE 05</p>
+                  <h3 id="wake-word-title">Wake Word</h3>
+                </div>
+                <span class="listening-mode-indicator">Mode · <strong id="listening-mode-state">Disabled</strong></span>
+              </div>
+              <p class="voice-capability-note wake-word-capability" id="wake-word-capability">Wake-word detection requires a supported local detector or a native Android foreground microphone service. This browser app does not use ordinary speech recognition as an always-listening or offline wake-word detector. Listening cannot continue after this tab closes.</p>
+              <div class="voice-setting-row">
+                <div class="setting-copy">
+                  <h3>Enable wake word</h3>
+                  <p>Allow the supported local engine to listen for your phrase.</p>
+                </div>
+                <label class="switch">
+                  <input id="wake-word-enabled" type="checkbox" aria-label="Enable wake word">
+                  <span class="switch-track" aria-hidden="true"></span>
+                </label>
+              </div>
+              <div class="voice-settings-controls wake-word-controls">
+                <label class="form-field">
+                  <span>Wake phrase</span>
+                  <input id="wake-word-phrase" type="text" maxlength="80" autocomplete="off" value="Hey ZeroGravity" aria-label="Wake phrase">
+                </label>
+                <label class="form-field wake-sensitivity-field">
+                  <span>Sensitivity <output id="wake-sensitivity-value" for="wake-sensitivity">50%</output></span>
+                  <input id="wake-sensitivity" type="range" min="0" max="100" step="5" value="50" aria-label="Wake-word sensitivity">
+                  <small id="wake-sensitivity-support">Available only when the local wake-word engine supports sensitivity settings.</small>
+                </label>
+              </div>
+              <div class="wake-word-status-grid">
+                <p>Wake-word engine <strong id="wake-word-engine-status">Unavailable in this browser</strong></p>
+                <p>Microphone permission <strong id="microphone-permission-state">Checking…</strong></p>
+                <p>Listening mode <strong id="wake-listening-mode">Disabled</strong></p>
+              </div>
+              <div class="voice-actions">
+                <button class="secondary-button" id="wake-word-toggle" type="button">Start wake-word listening</button>
+                <button class="secondary-button" id="wake-word-stop" type="button">Stop listening</button>
+              </div>
+              <p class="voice-settings-status" id="wake-word-status" role="status" aria-live="polite">Wake-word listening is unavailable until a supported local engine is connected. Push-to-talk remains available.</p>
+              <p class="wake-word-privacy">No wake-word audio is stored or uploaded by this app. A future Android integration must request permission after you start it, show the operating-system microphone indicator, use an explicit foreground service, and stop on request. This browser page does not run in the background or after it is closed.</p>
+            </section>
+          </section>
+        </section>
+      </main>
+
+      <nav class="bottom-nav" aria-label="Main navigation">
+        <button class="nav-item is-active" type="button" data-screen="home" aria-current="page">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 10.5 8.5-7 8.5 7v9a1 1 0 0 1-1 1h-5.2v-6.1h-4.6v6.1H4.5a1 1 0 0 1-1-1v-9Z"/></svg>
+          <span>Home</span>
+        </button>
+        <button class="nav-item" type="button" data-screen="modules">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><ellipse cx="12" cy="12" rx="3.5" ry="8.5"/><path d="M4.1 8.5h15.8M4.1 15.5h15.8"/></svg>
+          <span>Modules</span>
+        </button>
+        <button class="nav-item" type="button" data-screen="chat">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v11H9l-5 3v-14Z"/><path d="M8 10h8M8 13.5h5"/></svg>
+          <span>Chat</span>
+        </button>
+        <button class="nav-item" type="button" data-screen="settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="m19.4 15 .1.1a1.8 1.8 0 0 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3 .9v.2a1.8 1.8 0 0 1-3.6 0v-.2a1.8 1.8 0 0 0-3-.9l-.1.1a1.8 1.8 0 0 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-.9-3h-.2a1.8 1.8 0 0 1 0-3.6h.2a1.8 1.8 0 0 0 .9-3l-.1-.1a1.8 1.8 0 0 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3-.9v-.2a1.8 1.8 0 0 1 3.6 0v.2a1.8 1.8 0 0 0 3 .9l.1-.1a1.8 1.8 0 0 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 .9 3h.2a1.8 1.8 0 0 1 0 3.6h-.2a1.8 1.8 0 0 0-.9 3Z"/></svg>
+          <span>Settings</span>
+        </button>
+      </nav>
+    </div>
+  </body>
+</html>
