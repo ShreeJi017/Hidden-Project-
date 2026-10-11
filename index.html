@@ -3,8 +3,8 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#111512">
-    <meta name="description" content="ZeroGravity is a calm, focused space for your next session.">
+    <meta name="theme-color" content="#0A0B10">
+    <meta name="description" content="ZeroGravity is your personal AI space for conversation, research, voice, and creation.">
     <title>ZeroGravity</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -29,7 +29,7 @@
           <span class="wordmark-mark" aria-hidden="true"></span>
           <span>ZERO<span class="wordmark-light">GRAVITY</span></span>
         </a>
-        <span class="header-index">FIELD NOTES <span>—</span> 001</span>
+        <span class="header-index"><span class="connection-indicator"></span> <span id="app-connection-label">LOCAL · READY</span></span>
         <button class="header-settings" type="button" data-screen="settings" aria-label="Open settings" title="Settings">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7Z"/><path d="m19.4 15 .1.1a1.8 1.8 0 0 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3 .9v.2a1.8 1.8 0 0 1-3.6 0v-.2a1.8 1.8 0 0 0-3-.9l-.1.1a1.8 1.8 0 0 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-.9-3h-.2a1.8 1.8 0 0 1 0-3.6h.2a1.8 1.8 0 0 0 .9-3l-.1-.1a1.8 1.8 0 0 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3-.9v-.2a1.8 1.8 0 0 1 3.6 0v.2a1.8 1.8 0 0 0 3 .9l.1-.1a1.8 1.8 0 0 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 .9 3h.2a1.8 1.8 0 0 1 0 3.6h-.2a1.8 1.8 0 0 0-.9 3Z"/></svg>
         </button>
@@ -37,26 +37,47 @@
 
       <main id="main-content">
         <section class="screen home-screen" id="screen-home" aria-labelledby="home-title">
-          <div class="home-copy">
-            <p class="eyebrow"><span class="live-dot"></span> YOUR SPACE, RECENTERED</p>
-            <h1 id="home-title">A little less<br><span>gravity.</span></h1>
-            <p class="intro-copy">Find a quieter orbit. Take a breath, leave the noise outside.</p>
-            <button class="text-link" type="button" data-screen="modules">Explore Module 01 <span aria-hidden="true">↗</span></button>
-            <button class="voice-button home-voice-button" id="home-voice-input" type="button" aria-label="Start voice input">
-              <span aria-hidden="true">◉</span><span class="voice-button-copy">Start voice input</span>
-            </button>
-            <p class="home-voice-status" id="home-voice-status" role="status" aria-live="polite"></p>
+          <div class="home-topline">
+            <div class="home-avatar" aria-hidden="true">Z</div>
+            <div><p class="eyebrow">YOUR PERSONAL AI</p><h1 id="home-title">What can I do<br>for you<span>?</span></h1></div>
+            <span class="home-greeting-time">GOOD EVENING</span>
           </div>
-
-          <div class="orb-column">
-            <div class="orb-stage" id="orb-stage">
-              <div class="orb-halo" aria-hidden="true"></div>
-              <canvas id="particle-orb" role="img" aria-label="An animated sphere of glowing particles"></canvas>
-              <div class="orb-coordinate" aria-hidden="true">ZG — 01</div>
-              <div class="orb-caption"><span>VISUAL CORE</span><span>01 / 01</span></div>
+          <div class="home-orb-row">
+            <div class="orb-column">
+              <div class="orb-stage" id="orb-stage">
+                <div class="orb-halo" aria-hidden="true"></div>
+                <canvas id="particle-orb" role="img" aria-label="An animated sphere of glowing particles"></canvas>
+                <div class="orb-coordinate" aria-hidden="true">ZG / 01</div>
+                <div class="orb-caption"><span>HERE WITH YOU</span><span>AI CORE</span></div>
+              </div>
+              <div class="orb-status"><span class="status-dot"></span><span>STANDING BY</span><span class="status-divider">/</span><span id="orb-voice-state">IDLE</span><span class="status-divider">·</span><span id="orb-listening-mode">PUSH TO TALK</span></div>
             </div>
-            <div class="orb-status"><span class="status-dot"></span><span>FIELD STABLE</span><span class="status-divider">/</span><span id="orb-voice-state">IDLE</span><span class="status-divider">·</span><span id="orb-listening-mode">DISABLED</span></div>
           </div>
+          <form class="home-composer" id="home-composer">
+            <label class="visually-hidden" for="home-prompt">Ask ZeroGravity</label>
+            <textarea id="home-prompt" rows="2" maxlength="12000" placeholder="Ask anything, or tell me what you need…"></textarea>
+            <div class="home-composer-tools">
+              <div class="composer-shortcuts">
+                <button type="button" data-screen="file-analyzer" aria-label="Attach a file" title="Attach a file">＋</button>
+                <button type="button" data-screen="image-generator" aria-label="Create an image" title="Create an image">◌</button>
+                <button type="button" id="home-voice-input" aria-label="Start voice input" title="Voice input">♩</button>
+              </div>
+              <button class="composer-send" type="submit" aria-label="Start conversation" title="Start conversation"><span aria-hidden="true">↑</span></button>
+            </div>
+          </form>
+          <p class="home-voice-status" id="home-voice-status" role="status" aria-live="polite"></p>
+          <div class="home-quick-actions" aria-label="Quick actions">
+            <button type="button" data-screen="chat"><span>✳</span> Ask AI</button>
+            <button type="button" data-screen="live-search"><span>⌕</span> Search web</button>
+            <button type="button" data-screen="image-generator"><span>◌</span> Image studio</button>
+            <button type="button" data-screen="file-analyzer"><span>▧</span> Analyze file</button>
+            <button type="button" data-screen="projects"><span>⌘</span> Create app</button>
+            <button type="button" data-screen="voice-mode"><span>♫</span> Voice mode</button>
+          </div>
+          <section class="home-recents" aria-labelledby="home-recents-title">
+            <div class="home-section-heading"><h2 id="home-recents-title">Pick up where you left off</h2><button type="button" data-screen="chats">All chats <span aria-hidden="true">↗</span></button></div>
+            <div class="home-recent-list" id="home-recent-list"></div>
+          </section>
         </section>
 
         <section class="screen content-screen" id="screen-modules" aria-labelledby="modules-title" hidden>
@@ -134,11 +155,11 @@
         <section class="screen content-screen chat-screen" id="screen-chat" aria-labelledby="chat-title" hidden>
           <div class="chat-heading">
             <div class="content-heading">
-              <p class="eyebrow"><span class="live-dot"></span> MODULE 03 · AI ENGINE</p>
+              <p class="eyebrow"><span class="live-dot"></span> PRIVATE TO THIS DEVICE</p>
               <h1 id="chat-title">Conversation</h1>
-              <p class="intro-copy">Route each message through a local tool, an installed local model, or your configured online provider.</p>
+              <p class="intro-copy">A thoughtful space to work things through, one message at a time.</p>
             </div>
-            <button class="secondary-button" id="new-conversation" type="button">New conversation</button>
+            <div class="chat-heading-actions"><button class="secondary-button model-picker-button" type="button" data-screen="models">Choose model <span aria-hidden="true">⌄</span></button><button class="secondary-button" id="new-conversation" type="button" aria-label="New conversation" title="New conversation">＋</button></div>
           </div>
           <div class="chat-toolbar">
             <label for="conversation-history">History</label>
@@ -165,6 +186,126 @@
             <button class="send-button" id="send-message" type="submit">Send <span aria-hidden="true">↗</span></button>
           </form>
           <p class="chat-footnote">Messages are saved in this browser on this device.</p>
+        </section>
+
+        <section class="screen content-screen chats-screen" id="screen-chats" aria-labelledby="chats-title" hidden>
+          <div class="destination-header">
+            <div><p class="eyebrow">YOUR SPACE</p><h1 id="chats-title">Chats</h1></div>
+            <button class="primary-button" type="button" data-screen="chat">＋ New chat</button>
+          </div>
+          <label class="conversation-search"><span aria-hidden="true">⌕</span><span class="visually-hidden">Search conversations</span><input id="conversation-search" type="search" placeholder="Search your conversations" autocomplete="off"></label>
+          <div class="conversation-filters" role="group" aria-label="Conversation filter">
+            <button class="is-selected" type="button" data-conversation-filter="recent">Recent</button>
+            <button type="button" data-conversation-filter="pinned">Pinned</button>
+            <button type="button" data-conversation-filter="archived">Archived</button>
+          </div>
+          <div class="conversation-list" id="conversation-list" aria-live="polite"></div>
+          <div class="empty-state" id="chats-empty" hidden><span class="empty-orbit" aria-hidden="true">✳</span><h2>Your next thought starts here.</h2><p>New conversations will appear here and stay on this device.</p><button class="primary-button" type="button" data-screen="chat">Start a conversation</button></div>
+          <div class="destination-footnote"><span class="connection-indicator"></span>Conversation history is stored on this device.</div>
+        </section>
+
+        <section class="screen content-screen discover-screen" id="screen-discover" aria-labelledby="discover-title" hidden>
+          <div class="content-heading"><p class="eyebrow">A LITTLE MORE CAPABLE</p><h1 id="discover-title">Discover</h1><p class="intro-copy">Useful ways to think, make, and find your next answer.</p></div>
+          <label class="conversation-search discover-search"><span aria-hidden="true">⌕</span><span class="visually-hidden">Search tools</span><input id="discover-search" type="search" placeholder="Search tools and capabilities" autocomplete="off"></label>
+          <div class="discover-grid" id="discover-grid">
+            <button class="discover-card" type="button" data-screen="live-search" data-tool="search deep research"><span class="discover-icon aqua">⌕</span><strong>Search &amp; research</strong><small>Find current sources and follow the evidence.</small><span class="tool-status available">Wikipedia ready · web setup needed</span></button>
+            <button class="discover-card" type="button" data-screen="image-generator" data-tool="image studio generation"><span class="discover-icon violet">◌</span><strong>Image Studio</strong><small>Turn a detailed prompt into an image.</small><span class="tool-status" id="discover-image-status">Check setup</span></button>
+            <button class="discover-card" type="button" data-screen="file-analyzer" data-tool="files pdf docx text csv ocr"><span class="discover-icon aqua">▧</span><strong>File analysis</strong><small>Inspect a document or image.</small><span class="tool-status">Preview only</span></button>
+            <button class="discover-card" type="button" data-screen="chat" data-tool="coding code developer"><span class="discover-icon violet">⌘</span><strong>Coding assistant</strong><small>Explore an idea or work through code.</small><span class="tool-status">Provider required</span></button>
+            <button class="discover-card" type="button" data-screen="chat" data-tool="study flashcards learning"><span class="discover-icon aqua">▤</span><strong>Study mode</strong><small>Break a topic into clear learning steps.</small><span class="tool-status">Provider required</span></button>
+            <button class="discover-card" type="button" data-screen="projects" data-tool="agent tasks automation"><span class="discover-icon violet">◎</span><strong>Agent tasks</strong><small>Plan a workflow with explicit review.</small><span class="tool-status unavailable">Not connected</span></button>
+          </div>
+          <section class="discover-recent"><div class="home-section-heading"><h2>Recent activity</h2><button type="button" data-screen="chats">View chats ↗</button></div><p id="discover-recent-copy">Your recent tools and conversations will show up here.</p></section>
+        </section>
+
+        <section class="screen voice-mode-screen" id="screen-voice-mode" aria-labelledby="voice-mode-title" hidden>
+          <header class="voice-mode-header"><button class="icon-button" id="voice-mode-close" type="button" data-screen="home" aria-label="Close voice mode" title="Close voice mode">×</button><div><p class="eyebrow">VOICE MODE</p><h1 id="voice-mode-title">A more natural way to talk.</h1></div><button class="icon-button" type="button" data-screen="settings" aria-label="Voice settings" title="Voice settings">⚙</button></header>
+          <div class="voice-mode-main">
+            <div class="voice-orb-wrap" aria-hidden="true"><div class="voice-orb-glow"></div><div class="voice-orb"><i></i><i></i><i></i><i></i><i></i></div><span class="voice-orbit orbit-one"></span><span class="voice-orbit orbit-two"></span></div>
+            <p class="voice-mode-state" id="voice-mode-state-label">READY WHEN YOU ARE</p>
+            <p class="voice-mode-transcript" id="voice-mode-transcript">Push to talk uses your browser’s speech recognition. Your words stay editable before you send them.</p>
+          </div>
+          <div class="voice-mode-controls"><button class="voice-mode-end" type="button" data-screen="home" aria-label="End voice mode" title="End voice mode">×</button><button id="voice-mode-listen" class="voice-mode-mic" type="button" aria-label="Start voice input" title="Start voice input">♩</button><button class="voice-mode-text" type="button" data-screen="chat" aria-label="Switch to text chat" title="Switch to text chat">▤</button></div>
+          <p class="voice-mode-note">Microphone access is requested only when you tap the microphone. No audio is recorded or saved by ZeroGravity.</p>
+        </section>
+
+        <section class="screen content-screen models-screen" id="screen-models" aria-labelledby="models-title" hidden>
+          <div class="content-heading"><p class="eyebrow">AI PREFERENCES</p><h1 id="models-title">Models</h1><p class="intro-copy">Choose from models available through your own provider connections.</p></div>
+          <div class="model-default-row"><div><span class="setting-label">DEFAULT MODEL</span><strong id="models-default-name">No model configured</strong><small id="models-default-provider">Connect a Chat AI provider to begin.</small></div><button class="secondary-button" type="button" data-screen="api-connections">Connect a provider</button></div>
+          <div class="model-category-list">
+            <section class="model-category"><div><h2>Fast</h2><p>Everyday questions and quick drafts</p></div><span class="model-empty">Not available</span></section>
+            <section class="model-category"><div><h2>Smart</h2><p>Balanced reasoning and quality</p></div><span class="model-empty">Not available</span></section>
+            <section class="model-category"><div><h2>Reasoning</h2><p>Complex problems and careful analysis</p></div><span class="model-empty">Not available</span></section>
+            <section class="model-category"><div><h2>Vision</h2><p>Image understanding through a compatible provider</p></div><span class="model-empty">Not configured</span></section>
+            <section class="model-category"><div><h2>Local</h2><p>On-device inference, when an engine is installed</p></div><span class="model-empty">No engine installed</span></section>
+          </div>
+          <div class="model-measurement-note">Availability and measured latency appear after a provider connection test. No model availability is assumed.</div>
+          <button class="secondary-button" type="button" data-screen="settings">Fallback and offline preferences</button>
+        </section>
+
+        <section class="screen content-screen connections-screen" id="screen-api-connections" aria-labelledby="connections-title" hidden>
+          <div class="content-heading"><p class="eyebrow">YOUR KEYS, YOUR CHOICE</p><h1 id="connections-title">Connections</h1><p class="intro-copy">Connect providers for the capabilities you want. Credentials entered here remain in this page session only.</p></div>
+          <div class="security-banner"><span aria-hidden="true">◇</span><p><strong>Direct-browser setup</strong><br>This app has no secure backend proxy. Never use production or sensitive credentials here. Saved secrets are never shown in full.</p></div>
+          <div class="connection-groups">
+            <section><h2>Language and understanding</h2>
+              <button class="connection-row" type="button" data-provider-function="chat-ai"><span class="connection-type-icon">Aa</span><span><strong>Text &amp; reasoning</strong><small>Chat, coding, study, and reasoning</small></span><span class="connection-state" data-connection-status="chat-ai">Not configured</span><span aria-hidden="true">›</span></button>
+              <button class="connection-row" type="button" data-provider-function="vision"><span class="connection-type-icon">▧</span><span><strong>Vision</strong><small>Image understanding and OCR</small></span><span class="connection-state" data-connection-status="vision">Not configured</span><span aria-hidden="true">›</span></button>
+            </section>
+            <section><h2>Creation</h2>
+              <button class="connection-row" type="button" data-provider-function="image-generation"><span class="connection-type-icon">◌</span><span><strong>Image generation</strong><small>Image Studio provider</small></span><span class="connection-state" data-connection-status="image-generation">Not configured</span><span aria-hidden="true">›</span></button>
+              <button class="connection-row" type="button" data-provider-function="video-generation"><span class="connection-type-icon">▷</span><span><strong>Video generation</strong><small>External video models</small></span><span class="connection-state">Not connected</span><span aria-hidden="true">›</span></button>
+            </section>
+            <section><h2>Voice</h2>
+              <button class="connection-row" type="button" data-provider-function="stt"><span class="connection-type-icon">♫</span><span><strong>Speech to text</strong><small>Browser recognition is device-provided</small></span><span class="connection-state">Device capability</span><span aria-hidden="true">›</span></button>
+              <button class="connection-row" type="button" data-provider-function="tts"><span class="connection-type-icon">◖</span><span><strong>Text to speech</strong><small>Browser voices are device-provided</small></span><span class="connection-state">Device capability</span><span aria-hidden="true">›</span></button>
+            </section>
+            <section><h2>Research and memory</h2>
+              <button class="connection-row" type="button" data-provider-function="internet-search"><span class="connection-type-icon">⌕</span><span><strong>Web search</strong><small>Current sources and citations</small></span><span class="connection-state" data-connection-status="internet-search">Not configured</span><span aria-hidden="true">›</span></button>
+              <button class="connection-row" type="button" data-provider-function="embeddings"><span class="connection-type-icon">⠿</span><span><strong>Embeddings &amp; memory</strong><small>Vector search integration</small></span><span class="connection-state">Not connected</span><span aria-hidden="true">›</span></button>
+            </section>
+            <section><h2>Custom</h2><button class="connection-row" type="button" data-provider-function="custom-api"><span class="connection-type-icon">⌘</span><span><strong>OpenAI-compatible endpoint</strong><small>Use a compatible API base URL</small></span><span class="connection-state">Configure manually</span><span aria-hidden="true">›</span></button></section>
+          </div>
+          <p class="connection-support-note">Connection tests verify endpoint connectivity; they do not guarantee that a selected model is available. STT, TTS, video, embeddings, and custom protocols are not implemented as provider adapters in this app.</p>
+          <button class="primary-button" type="button" data-screen="settings">Manage provider settings</button>
+        </section>
+
+        <section class="screen content-screen projects-screen" id="screen-projects" aria-labelledby="projects-title" hidden>
+          <div class="content-heading"><p class="eyebrow">FROM IDEA TO INTERFACE</p><h1 id="projects-title">Projects</h1><p class="intro-copy">Shape an app concept and keep the work organized.</p></div>
+          <div class="builder-unavailable"><span class="builder-icon" aria-hidden="true">⌘</span><div><strong>AI App Builder</strong><span>Build service not connected</span></div></div>
+          <form id="project-builder-form" class="project-builder-form">
+            <label class="form-field" for="project-prompt"><span>What are we making?</span><textarea id="project-prompt" rows="3" placeholder="Describe the app you want to build." disabled></textarea></label>
+            <div class="project-options"><label class="form-field"><span>Project name</span><input type="text" placeholder="New project" disabled></label><label class="form-field"><span>Framework</span><select disabled><option>Choose framework</option></select></label><label class="form-field"><span>Target platform</span><select disabled><option>Choose platform</option></select></label></div>
+            <button class="primary-button" type="button" disabled>Build plan unavailable</button>
+          </form>
+          <div class="builder-workspace"><section><div class="workspace-heading"><h2>Build plan</h2><span>Not started</span></div><div class="workspace-empty">A connected build service is required to create plans, files, previews, logs, or APKs.</div><h2>Files</h2><div class="workspace-empty">No project files</div></section><section class="builder-preview"><div class="workspace-heading"><h2>Live preview</h2><span>Offline</span></div><div class="device-preview"><div class="device-screen"><span>PREVIEW UNAVAILABLE</span><p>Connect a project build service to render an app.</p></div></div></section></div>
+          <p class="connection-support-note">There is no app-generation backend or Android build pipeline connected in this app. No build, APK, or export is represented as available.</p>
+        </section>
+
+        <section class="screen content-screen file-analyzer-screen" id="screen-file-analyzer" aria-labelledby="file-analyzer-title" hidden>
+          <div class="content-heading"><p class="eyebrow">MAKE SENSE OF A FILE</p><h1 id="file-analyzer-title">File analyzer</h1><p class="intro-copy">Inspect a supported file locally. Analysis requires a compatible provider and file-processing flow.</p></div>
+          <label class="file-dropzone" for="analyzer-file"><span class="file-upload-icon" aria-hidden="true">↑</span><strong>Choose a file to inspect</strong><small>PDF, DOCX, TXT, CSV, PNG, JPG · up to 20 MB</small><input id="analyzer-file" type="file" accept=".pdf,.docx,.txt,.csv,.png,.jpg,.jpeg,application/pdf,text/plain,text/csv,image/*"></label>
+          <p class="file-processing-status" id="file-processing-status" role="status" aria-live="polite">No file selected. Files are not uploaded until an analysis provider is configured.</p>
+          <div class="file-preview-panel" id="file-preview-panel" hidden><div class="file-preview-icon">▧</div><div><strong id="file-preview-name"></strong><small id="file-preview-meta"></small></div><span class="file-status-tag">Local selection</span></div>
+          <div class="file-actions" aria-label="Analysis actions"><button type="button" disabled>Summarize</button><button type="button" disabled>Explain</button><button type="button" disabled>Extract text</button><button type="button" disabled>Ask questions</button><button type="button" disabled>Compare</button></div>
+          <div class="security-banner"><span aria-hidden="true">◇</span><p><strong>Analysis is not connected</strong><br>This preview only reads file name and size. File contents are not processed or sent anywhere.</p></div>
+        </section>
+
+        <section class="screen content-screen profile-screen" id="screen-profile" aria-labelledby="profile-title" hidden>
+          <div class="profile-identity"><div class="profile-avatar" aria-hidden="true">Z</div><div><p class="eyebrow">YOUR ZEROGRAVITY</p><h1 id="profile-title">Local profile</h1><p>Guest · This device</p></div></div>
+          <div class="profile-auth-note"><strong>No account connected</strong><p>Email, phone, Google, Apple, and Microsoft sign-in are not implemented in this app. Your conversations and memory remain on this device.</p><button class="secondary-button" type="button" data-screen="authentication">Sign-in options</button></div>
+          <section class="profile-group"><h2>Personalize</h2><button class="profile-link-row" type="button" data-screen="settings"><span>◐</span><span><strong>Appearance</strong><small>Theme, accent, animation</small></span><span>›</span></button><button class="profile-link-row" type="button" data-screen="settings"><span>♫</span><span><strong>Voice &amp; accessibility</strong><small>Language, voice, reduced motion</small></span><span>›</span></button></section>
+          <section class="profile-group"><h2>AI setup</h2><button class="profile-link-row" type="button" data-screen="models"><span>✳</span><span><strong>AI defaults</strong><small>Models and offline preferences</small></span><span>›</span></button><button class="profile-link-row" type="button" data-screen="api-connections"><span>⠿</span><span><strong>Provider connections</strong><small>Keys and compatible endpoints</small></span><span>›</span></button></section>
+          <section class="profile-group"><h2>Your data</h2><button class="profile-link-row" type="button" data-screen="memory"><span>◈</span><span><strong>Memory</strong><small>Saved facts and preferences</small></span><span>›</span></button><button class="profile-link-row" type="button" data-screen="settings"><span>⌑</span><span><strong>Privacy &amp; data</strong><small>History, export, deletion, diagnostics</small></span><span>›</span></button></section>
+          <p class="profile-version">ZeroGravity · Version 0.1.0</p>
+        </section>
+
+        <section class="screen content-screen authentication-screen" id="screen-authentication" aria-labelledby="authentication-title" hidden>
+          <div class="content-heading"><p class="eyebrow">ACCOUNT</p><h1 id="authentication-title">Sign in</h1><p class="intro-copy">Account access is not connected in this build. No identity provider is active.</p></div>
+          <div class="auth-not-connected"><span aria-hidden="true">◇</span><p><strong>Authentication unavailable</strong><br>ZeroGravity has no account backend configured. Continuing as a local guest keeps your data on this device.</p></div>
+          <div class="auth-options" aria-label="Unavailable sign-in providers">
+            <button type="button" disabled>Email</button><button type="button" disabled>Phone</button><button type="button" disabled>Google</button><button type="button" disabled>Apple</button><button type="button" disabled>Microsoft</button>
+          </div>
+          <button class="secondary-button" type="button" data-screen="profile">Continue as guest</button>
         </section>
 
         <section class="screen content-screen memory-screen" id="screen-memory" aria-labelledby="memory-title" hidden>
@@ -741,17 +882,21 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 10.5 8.5-7 8.5 7v9a1 1 0 0 1-1 1h-5.2v-6.1h-4.6v6.1H4.5a1 1 0 0 1-1-1v-9Z"/></svg>
           <span>Home</span>
         </button>
-        <button class="nav-item" type="button" data-screen="modules">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><ellipse cx="12" cy="12" rx="3.5" ry="8.5"/><path d="M4.1 8.5h15.8M4.1 15.5h15.8"/></svg>
-          <span>Modules</span>
-        </button>
-        <button class="nav-item" type="button" data-screen="chat">
+        <button class="nav-item" type="button" data-screen="chats">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v11H9l-5 3v-14Z"/><path d="M8 10h8M8 13.5h5"/></svg>
-          <span>Chat</span>
+          <span>Chats</span>
         </button>
-        <button class="nav-item" type="button" data-screen="settings">
+        <button class="nav-item" type="button" data-screen="discover">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4.5 4.5M10.8 7.5v6.6M7.5 10.8h6.6"/></svg>
+          <span>Discover</span>
+        </button>
+        <button class="nav-item" type="button" data-screen="projects">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="m19.4 15 .1.1a1.8 1.8 0 0 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3 .9v.2a1.8 1.8 0 0 1-3.6 0v-.2a1.8 1.8 0 0 0-3-.9l-.1.1a1.8 1.8 0 0 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-.9-3h-.2a1.8 1.8 0 0 1 0-3.6h.2a1.8 1.8 0 0 0 .9-3l-.1-.1a1.8 1.8 0 0 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3-.9v-.2a1.8 1.8 0 0 1 3.6 0v.2a1.8 1.8 0 0 0 3 .9l.1-.1a1.8 1.8 0 0 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 .9 3h.2a1.8 1.8 0 0 1 0 3.6h-.2a1.8 1.8 0 0 0-.9 3Z"/></svg>
-          <span>Settings</span>
+          <span>Projects</span>
+        </button>
+        <button class="nav-item" type="button" data-screen="profile">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.6-3.3 3.2-5 7-5s6.4 1.7 7 5"/></svg>
+          <span>Profile</span>
         </button>
       </nav>
     </div>

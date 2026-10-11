@@ -55,12 +55,27 @@ function setScreen(name, { pushHistory = true } = {}) {
     window.history.pushState({ screen: name }, '', `#screen-${name}`);
   }
   activeScreen = name;
+  document.body.classList.toggle('voice-mode-active', name === 'voice-mode');
   screens.forEach((screen) => {
     screen.hidden = screen.id !== `screen-${name}`;
   });
 
+  const primaryDestination = ({
+    chat: 'chats',
+    'voice-mode': 'home',
+    modules: 'discover',
+    'image-generator': 'discover',
+    'image-gallery': 'discover',
+    'live-search': 'discover',
+    weather: 'discover',
+    'file-analyzer': 'discover',
+    'api-connections': 'profile',
+    models: 'profile',
+    memory: 'profile',
+    settings: 'profile'
+  })[name] || name;
   navItems.forEach((item) => {
-    const isActive = item.dataset.screen === name;
+    const isActive = item.dataset.screen === primaryDestination;
     item.classList.toggle('is-active', isActive);
     if (isActive) item.setAttribute('aria-current', 'page');
     else item.removeAttribute('aria-current');
@@ -106,7 +121,7 @@ function resizeCanvas() {
   canvas.width = Math.round(canvasWidth * pixelRatio);
   canvas.height = Math.round(canvasHeight * pixelRatio);
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-  points = makePoints(window.innerWidth < 600 ? 112 : 164);
+  points = makePoints(window.innerWidth < 600 ? 1200 : 1800);
   renderOrb();
 }
 
@@ -116,15 +131,20 @@ function drawOrb() {
   context.clearRect(0, 0, canvasWidth, canvasHeight);
   const centerX = canvasWidth / 2;
   const centerY = canvasHeight / 2;
-  const radius = Math.min(canvasWidth, canvasHeight) * 0.37;
+  const state = document.body.dataset.voiceState || 'idle';
+  const pulse = state === 'speaking' ? 1 + Math.sin(Date.now() / 190) * 0.035
+    : state === 'listening' ? 1 + Math.sin(Date.now() / 320) * 0.025
+      : state === 'thinking' ? 0.96 + Math.sin(Date.now() / 240) * 0.035
+        : 1 + Math.sin(Date.now() / 2400) * 0.012;
+  const radius = Math.min(canvasWidth, canvasHeight) * 0.34 * pulse;
   const tiltCosine = Math.cos(-0.18);
   const tiltSine = Math.sin(-0.18);
   const cosine = Math.cos(rotation);
   const sine = Math.sin(rotation);
   const glow = context.createRadialGradient(centerX, centerY, radius * 0.08, centerX, centerY, radius * 1.1);
-  glow.addColorStop(0, 'rgba(151, 244, 197, 0.13)');
-  glow.addColorStop(0.58, 'rgba(118, 208, 168, 0.035)');
-  glow.addColorStop(1, 'rgba(118, 208, 168, 0)');
+  glow.addColorStop(0, state === 'error' ? 'rgba(240, 150, 145, 0.13)' : 'rgba(155, 140, 255, 0.17)');
+  glow.addColorStop(0.48, 'rgba(98, 217, 207, 0.06)');
+  glow.addColorStop(1, 'rgba(98, 217, 207, 0)');
   context.fillStyle = glow;
   context.beginPath();
   context.arc(centerX, centerY, radius * 1.1, 0, Math.PI * 2);
@@ -135,16 +155,21 @@ function drawOrb() {
     const rotatedZ = point.x * sine + point.z * cosine;
     const rotatedY = point.y * tiltCosine - rotatedZ * tiltSine;
     const depth = point.y * tiltSine + rotatedZ * tiltCosine;
-    return { x: centerX + rotatedX * radius, y: centerY + rotatedY * radius, depth };
+    const convergence = state === 'thinking' ? 0.84 + ((point.x + 1) / 2) * 0.16 : 1;
+    return { x: centerX + rotatedX * radius * convergence, y: centerY + rotatedY * radius * convergence, depth };
   }).sort((first, second) => first.depth - second.depth);
 
   projected.forEach((point) => {
     const depth = (point.depth + 1) / 2;
     const size = 0.65 + depth * 1.2;
     const opacity = (0.12 + depth * 0.76) * (glowLevel / 75);
-    context.fillStyle = depth > 0.84
-      ? `rgba(212, 244, 123, ${Math.min(opacity, 1)})`
-      : `rgba(167, 242, 207, ${Math.min(opacity, 1)})`;
+    context.fillStyle = state === 'error'
+      ? `rgba(240, 150, 145, ${Math.min(opacity, 1)})`
+      : depth > 0.82
+        ? `rgba(224, 220, 255, ${Math.min(opacity, 1)})`
+        : depth > 0.48
+          ? `rgba(155, 140, 255, ${Math.min(opacity, 1)})`
+          : `rgba(98, 217, 207, ${Math.min(opacity, 1)})`;
     context.beginPath();
     context.arc(point.x, point.y, size, 0, Math.PI * 2);
     context.fill();
@@ -157,7 +182,7 @@ function animateOrb() {
     return;
   }
 
-  rotation += 0.0022;
+  rotation += document.body.dataset.voiceState === 'thinking' ? 0.009 : 0.0018;
   drawOrb();
   frameRequest = window.requestAnimationFrame(animateOrb);
 }
@@ -320,6 +345,8 @@ function loadConversations() {
     id: conversation.id,
     title: typeof conversation.title === 'string' ? conversation.title : 'Conversation',
     updatedAt: Number(conversation.updatedAt) || Date.now(),
+    pinned: conversation.pinned === true,
+    archived: conversation.archived === true,
     messages: conversation.messages.filter((message) => (
       message
       && ['user', 'assistant'].includes(message.role)
@@ -748,6 +775,7 @@ function renderChat() {
   }
 
   chatMessages.scrollTop = chatMessages.scrollHeight;
+  renderDestinationHistory();
   sendButton.disabled = requestInFlight;
   chatInput.disabled = requestInFlight;
   document.querySelector('#new-conversation').disabled = requestInFlight;
@@ -1377,13 +1405,16 @@ function syncVoiceControls() {
   const homeButton = document.querySelector('#home-voice-input');
   const chatButton = document.querySelector('#chat-voice-input');
   const settingsButton = document.querySelector('#settings-voice-input');
+  const voiceModeButton = document.querySelector('#voice-mode-listen');
 
-  homeButton.querySelector('.voice-button-copy').textContent = listening ? 'Stop listening' : 'Start voice input';
   homeButton.setAttribute('aria-label', listening ? 'Stop voice input' : 'Start voice input');
+  homeButton.title = listening ? 'Stop voice input' : 'Start voice input';
   chatButton.querySelector('.voice-button-label').textContent = listening ? 'Stop' : 'Voice';
   chatButton.setAttribute('aria-label', listening ? 'Stop voice input' : 'Start voice input');
   chatButton.title = listening ? 'Stop voice input' : 'Start voice input';
   settingsButton.textContent = listening ? 'Stop voice input' : 'Start voice input';
+  voiceModeButton.setAttribute('aria-label', listening ? 'Stop voice input' : 'Start voice input');
+  voiceModeButton.title = listening ? 'Stop voice input' : 'Start voice input';
   [homeButton, chatButton, settingsButton].forEach((button) => {
     button.classList.toggle('is-listening', listening);
   });
@@ -1407,6 +1438,18 @@ function setVoiceState(state) {
   document.querySelector('#voice-settings-state').textContent = stateLabel;
   document.querySelector('#voice-settings-state').dataset.state = state === 'requesting' ? 'listening' : state;
   document.querySelector('#orb-voice-state').textContent = orbState;
+  const voiceModeLabel = document.querySelector('#voice-mode-state-label');
+  if (voiceModeLabel) {
+    voiceModeLabel.textContent = ({
+      idle: 'READY WHEN YOU ARE',
+      requesting: 'REQUESTING MICROPHONE',
+      listening: 'LISTENING',
+      thinking: 'THINKING',
+      speaking: 'SPEAKING',
+      error: 'VOICE UNAVAILABLE',
+      'wake-word-detected': 'WAKE WORD DETECTED'
+    })[state] || state.toUpperCase();
+  }
   document.body.dataset.voiceState = state === 'requesting' ? 'listening' : state;
   syncVoiceControls();
 }
@@ -1483,6 +1526,10 @@ async function startVoiceInput() {
       if (result.finalTranscript) finalTranscript = `${finalTranscript} ${result.finalTranscript}`.trim();
       const recognizedText = `${finalTranscript} ${result.interimTranscript}`.trim();
       chatInput.value = [transcriptPrefix, recognizedText].filter(Boolean).join(' ');
+      const voiceTranscript = document.querySelector('#voice-mode-transcript');
+      if (voiceTranscript && activeScreen === 'voice-mode') {
+        voiceTranscript.textContent = recognizedText || 'Listening…';
+      }
       if (result.finalTranscript) {
         voiceDraftPending = true;
         setChatNotice('Speech recognized. Review or edit the text, then send it when ready.', 'success');
@@ -2137,7 +2184,10 @@ document.querySelector('#toggle-provider-key').addEventListener('click', (event)
   event.currentTarget.setAttribute('aria-label', reveal ? 'Hide API key' : 'Show API key');
 });
 
-document.querySelector('#home-voice-input').addEventListener('click', startVoiceInput);
+document.querySelector('#home-voice-input').addEventListener('click', () => {
+  chatInput.value = document.querySelector('#home-prompt').value;
+  startVoiceInput();
+});
 document.querySelector('#chat-voice-input').addEventListener('click', startVoiceInput);
 document.querySelector('#settings-voice-input').addEventListener('click', startVoiceInput);
 document.querySelector('#stop-voice').addEventListener('click', stopVoiceActivities);
@@ -2311,3 +2361,269 @@ document.querySelector('#clear-phone-command-history').addEventListener('click',
   phoneCommandStatus.classList.remove('is-error');
   phoneCommandStatus.classList.remove('is-success');
 });
+
+function renderDestinationHistory() {
+  const list = document.querySelector('#conversation-list');
+  const homeList = document.querySelector('#home-recent-list');
+  const emptyState = document.querySelector('#chats-empty');
+  if (!list || !homeList || !emptyState) return;
+
+  const filter = document.querySelector('[data-conversation-filter].is-selected')?.dataset.conversationFilter || 'recent';
+  const visibleConversations = [...conversations]
+    .filter((conversation) => conversation.messages.length > 0)
+    .filter((conversation) => filter === 'archived'
+      ? conversation.archived
+      : !conversation.archived && (filter !== 'pinned' || conversation.pinned))
+    .sort((first, second) => Number(second.pinned) - Number(first.pinned) || second.updatedAt - first.updatedAt);
+  const query = document.querySelector('#conversation-search')?.value.trim().toLocaleLowerCase() || '';
+  const filtered = visibleConversations.filter((conversation) => (
+    !query || conversation.title.toLocaleLowerCase().includes(query)
+      || conversation.messages.some((message) => message.content.toLocaleLowerCase().includes(query))
+  ));
+  list.replaceChildren();
+  filtered.forEach((conversation) => {
+    const latestMessage = conversation.messages.at(-1)?.content || '';
+    const row = document.createElement('div');
+    row.className = 'conversation-row';
+    const openButton = document.createElement('button');
+    openButton.type = 'button';
+    openButton.className = 'conversation-open';
+    openButton.setAttribute('aria-label', `Open ${conversation.title}`);
+    openButton.innerHTML = '<span class="conversation-row-icon" aria-hidden="true">◷</span>';
+    const copy = document.createElement('span');
+    copy.className = 'conversation-row-copy';
+    const title = document.createElement('strong');
+    title.textContent = conversation.title;
+    const excerpt = document.createElement('small');
+    excerpt.textContent = latestMessage;
+    copy.append(title, excerpt);
+    const date = document.createElement('time');
+    date.dateTime = new Date(conversation.updatedAt).toISOString();
+    date.textContent = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(conversation.updatedAt);
+    openButton.append(copy, date);
+    openButton.addEventListener('click', () => {
+      activeConversationId = conversation.id;
+      historySelect.value = conversation.id;
+      renderChat();
+      setScreen('chat');
+    });
+    const menu = document.createElement('details');
+    menu.className = 'conversation-actions';
+    const summary = document.createElement('summary');
+    summary.setAttribute('aria-label', `Actions for ${conversation.title}`);
+    summary.title = 'Conversation actions';
+    summary.textContent = '···';
+    menu.append(summary);
+    const actionDefinitions = [
+      ['rename', 'Rename'],
+      [conversation.pinned ? 'unpin' : 'pin', conversation.pinned ? 'Unpin' : 'Pin'],
+      [conversation.archived ? 'unarchive' : 'archive', conversation.archived ? 'Restore' : 'Archive'],
+      ['export', 'Export'],
+      ['delete', 'Delete']
+    ];
+    actionDefinitions.forEach(([action, label]) => {
+      const actionButton = document.createElement('button');
+      actionButton.type = 'button';
+      actionButton.dataset.conversationAction = action;
+      actionButton.textContent = label;
+      actionButton.addEventListener('click', () => {
+        if (action === 'rename') {
+          const nextTitle = window.prompt('Rename conversation', conversation.title)?.trim().slice(0, 80);
+          if (nextTitle) conversation.title = nextTitle;
+        } else if (action === 'pin' || action === 'unpin') {
+          conversation.pinned = action === 'pin';
+        } else if (action === 'archive' || action === 'unarchive') {
+          conversation.archived = action === 'archive';
+        } else if (action === 'delete') {
+          if (!window.confirm(`Delete “${conversation.title}” from this device? This cannot be undone.`)) return;
+          conversations = conversations.filter((entry) => entry.id !== conversation.id);
+          if (activeConversationId === conversation.id) {
+            if (!conversations.length) conversations = [createConversation()];
+            activeConversationId = conversations[0].id;
+          }
+        } else if (action === 'export') {
+          const file = new Blob([JSON.stringify(conversation, null, 2)], { type: 'application/json' });
+          const url = URL.createObjectURL(file);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${conversation.title.replace(/[^a-z0-9-_]+/gi, '-').slice(0, 50) || 'conversation'}.json`;
+          link.click();
+          URL.revokeObjectURL(url);
+          menu.open = false;
+          return;
+        }
+        persistConversations();
+        renderChat();
+      });
+      menu.append(actionButton);
+    });
+    row.append(openButton, menu);
+    list.append(row);
+  });
+  emptyState.hidden = filtered.length > 0 || Boolean(query && visibleConversations.length);
+  const emptyTitle = emptyState.querySelector('h2');
+  const emptyCopy = emptyState.querySelector('p');
+  if (!query && filter === 'pinned') {
+    emptyTitle.textContent = 'No pinned conversations yet.';
+    emptyCopy.textContent = 'Pin a conversation from its actions to keep it close.';
+  } else if (!query && filter === 'archived') {
+    emptyTitle.textContent = 'Nothing archived.';
+    emptyCopy.textContent = 'Archived conversations will be kept here until you restore them.';
+  } else {
+    emptyTitle.textContent = 'Your next thought starts here.';
+    emptyCopy.textContent = 'New conversations will appear here and stay on this device.';
+  }
+  if (!visibleConversations.length) {
+    list.replaceChildren();
+  } else if (query && !filtered.length) {
+    const noResults = document.createElement('p');
+    noResults.className = 'chat-empty';
+    noResults.textContent = 'No conversations match that search.';
+    list.append(noResults);
+  }
+
+  homeList.replaceChildren();
+  const recent = [...conversations]
+    .filter((conversation) => conversation.messages.length > 0 && !conversation.archived)
+    .sort((first, second) => Number(second.pinned) - Number(first.pinned) || second.updatedAt - first.updatedAt)
+    .slice(0, 2);
+  if (!recent.length) {
+    const empty = document.createElement('p');
+    empty.className = 'home-recent-empty';
+    empty.textContent = 'Your conversations will appear here.';
+    homeList.append(empty);
+    return;
+  }
+  recent.forEach((conversation) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.className = 'recent-conversation';
+    button.innerHTML = '<span class="recent-icon" aria-hidden="true">◷</span>';
+    const copy = document.createElement('span');
+    const title = document.createElement('strong');
+    title.textContent = conversation.title;
+    const subtitle = document.createElement('small');
+    subtitle.textContent = `${conversation.messages.length} messages · ${new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(conversation.updatedAt)}`;
+    copy.append(title, subtitle);
+    const arrow = document.createElement('span');
+    arrow.className = 'recent-arrow';
+    arrow.setAttribute('aria-hidden', 'true');
+    arrow.textContent = '↗';
+    button.append(copy, arrow);
+    button.addEventListener('click', () => {
+      activeConversationId = conversation.id;
+      historySelect.value = conversation.id;
+      renderChat();
+      setScreen('chat');
+    });
+    homeList.append(button);
+  });
+}
+
+function renderConnectionStatuses() {
+  document.querySelectorAll('[data-connection-status]').forEach((status) => {
+    const functionId = status.dataset.connectionStatus;
+    const configured = providers.some((provider) => provider.functionId === functionId && provider.enabled);
+    status.textContent = configured ? 'Configured · test needed' : 'Not configured';
+    status.classList.toggle('is-configured', configured);
+  });
+  const activeProvider = getActiveProvider();
+  const headerLabel = document.querySelector('#app-connection-label');
+  if (headerLabel) {
+    headerLabel.textContent = activeProvider
+      ? sessionProviderCredentials.has(activeProvider.id) ? 'KEY IN SESSION' : 'KEY NEEDED'
+      : 'LOCAL · READY';
+  }
+  const modelName = document.querySelector('#models-default-name');
+  const modelProvider = document.querySelector('#models-default-provider');
+  if (modelName && modelProvider) {
+    modelName.textContent = activeProvider?.model || 'No model configured';
+    modelProvider.textContent = activeProvider
+      ? `${activeProvider.name} · connection not verified`
+      : 'Connect a Chat AI provider to begin.';
+  }
+  const imageStatus = document.querySelector('#discover-image-status');
+  if (imageStatus) {
+    const imageProvider = providers.find((provider) => provider.functionId === 'image-generation' && provider.enabled);
+    imageStatus.textContent = imageProvider ? 'Provider setup saved' : 'Provider required';
+  }
+}
+
+document.querySelector('#home-composer').addEventListener('submit', (event) => {
+  event.preventDefault();
+  const prompt = document.querySelector('#home-prompt');
+  const message = prompt.value.trim();
+  if (!message) {
+    prompt.focus();
+    return;
+  }
+  chatInput.value = message;
+  prompt.value = '';
+  setScreen('chat');
+  chatForm.requestSubmit();
+});
+
+document.querySelector('#voice-mode-listen').addEventListener('click', () => {
+  startVoiceInput();
+});
+document.querySelectorAll('.voice-mode-end, #voice-mode-close').forEach((button) => button.addEventListener('click', () => {
+  stopVoiceActivities();
+}));
+document.querySelector('#conversation-search').addEventListener('input', renderDestinationHistory);
+document.querySelectorAll('[data-conversation-filter]').forEach((button) => {
+  button.addEventListener('click', () => {
+    document.querySelectorAll('[data-conversation-filter]').forEach((filterButton) => {
+      const selected = filterButton === button;
+      filterButton.classList.toggle('is-selected', selected);
+      filterButton.setAttribute('aria-pressed', String(selected));
+    });
+    renderDestinationHistory();
+  });
+});
+document.querySelector('#discover-search').addEventListener('input', (event) => {
+  const query = event.currentTarget.value.trim().toLocaleLowerCase();
+  document.querySelectorAll('.discover-card').forEach((card) => {
+    card.hidden = Boolean(query) && !card.dataset.tool.includes(query);
+  });
+});
+document.querySelectorAll('.connection-row[data-provider-function]').forEach((row) => {
+  row.addEventListener('click', () => {
+    const functionId = row.dataset.providerFunction;
+    if (!window.ZeroGravityAI.functions.some((item) => item.id === functionId)) return;
+    setScreen('settings');
+    providerFunctionSelect.value = functionId;
+    providerFunctionSelect.dispatchEvent(new Event('change'));
+    document.querySelector('.own-api').scrollIntoView({ behavior: motionEnabled ? 'smooth' : 'auto', block: 'start' });
+  });
+});
+document.querySelector('#analyzer-file').addEventListener('change', (event) => {
+  const file = event.currentTarget.files?.[0];
+  const panel = document.querySelector('#file-preview-panel');
+  const status = document.querySelector('#file-processing-status');
+  if (!file) {
+    panel.hidden = true;
+    status.textContent = 'No file selected. Files are not uploaded until an analysis provider is configured.';
+    return;
+  }
+  const supportedFile = /\.(pdf|docx|txt|csv|png|jpe?g)$/i.test(file.name);
+  if (!supportedFile) {
+    panel.hidden = true;
+    status.textContent = 'This file type is not supported. Choose a PDF, DOCX, TXT, CSV, PNG, or JPG file.';
+    status.classList.add('is-error');
+    return;
+  }
+  if (file.size > 20 * 1024 * 1024) {
+    panel.hidden = true;
+    status.textContent = 'This file is larger than 20 MB. Choose a smaller file to inspect.';
+    status.classList.add('is-error');
+    return;
+  }
+  document.querySelector('#file-preview-name').textContent = file.name;
+  document.querySelector('#file-preview-meta').textContent = `${file.type || 'Unknown type'} · ${(file.size / 1024).toFixed(1)} KB`;
+  panel.hidden = false;
+  status.classList.remove('is-error');
+  status.textContent = 'File selected locally. Its contents have not been read, uploaded, or analyzed.';
+});
+
+renderDestinationHistory();
+renderConnectionStatuses();
