@@ -16,6 +16,7 @@
     <script src="image-generation.js" defer></script>
     <script src="image-generation-ui.js" defer></script>
     <script src="voice-services.js" defer></script>
+    <script src="voice-settings.js" defer></script>
     <script src="offline-services.js" defer></script>
     <script src="memory-services.js" defer></script>
     <script src="memory-ui.js" defer></script>
@@ -27,7 +28,7 @@
       <header class="app-header">
         <a class="wordmark" href="#screen-home" aria-label="ZeroGravity home" data-screen="home">
           <span class="wordmark-mark" aria-hidden="true"></span>
-          <span>ZERO<span class="wordmark-light">GRAVITY</span></span>
+          <span class="wordmark-name"><span class="wordmark-zero">Zero</span><span class="wordmark-light">Gravity</span></span>
         </a>
         <span class="header-index"><span class="connection-indicator"></span> <span id="app-connection-label">LOCAL · READY</span></span>
         <button class="header-settings" type="button" data-screen="settings" aria-label="Open settings" title="Settings">
@@ -39,7 +40,7 @@
         <section class="screen home-screen" id="screen-home" aria-labelledby="home-title">
           <div class="home-topline">
             <div class="home-avatar" aria-hidden="true">Z</div>
-            <div><p class="eyebrow">YOUR PERSONAL AI</p><h1 id="home-title">What can I do<br>for you<span>?</span></h1></div>
+            <div><p class="eyebrow">YOUR PERSONAL AI</p><h1 id="home-title">A little space<br>to <span>think clearly.</span></h1></div>
             <span class="home-greeting-time">GOOD EVENING</span>
           </div>
           <div class="home-orb-row">
@@ -155,11 +156,11 @@
         <section class="screen content-screen chat-screen" id="screen-chat" aria-labelledby="chat-title" hidden>
           <div class="chat-heading">
             <div class="content-heading">
-              <p class="eyebrow"><span class="live-dot"></span> PRIVATE TO THIS DEVICE</p>
+              <p class="eyebrow"><span class="live-dot"></span> YOUR CONVERSATIONS</p>
               <h1 id="chat-title">Conversation</h1>
               <p class="intro-copy">A thoughtful space to work things through, one message at a time.</p>
             </div>
-            <div class="chat-heading-actions"><button class="secondary-button model-picker-button" type="button" data-screen="models">Choose model <span aria-hidden="true">⌄</span></button><button class="secondary-button" id="new-conversation" type="button" aria-label="New conversation" title="New conversation">＋</button></div>
+            <div class="chat-heading-actions"><button class="secondary-button" type="button" data-screen="chats">History</button><button class="secondary-button model-picker-button" type="button" data-screen="models">Choose model <span aria-hidden="true">⌄</span></button><button class="secondary-button" id="new-conversation" type="button" aria-label="New conversation" title="New conversation">＋</button></div>
           </div>
           <div class="chat-toolbar">
             <label for="conversation-history">History</label>
@@ -205,16 +206,42 @@
         </section>
 
         <section class="screen content-screen discover-screen" id="screen-discover" aria-labelledby="discover-title" hidden>
-          <div class="content-heading"><p class="eyebrow">A LITTLE MORE CAPABLE</p><h1 id="discover-title">Discover</h1><p class="intro-copy">Useful ways to think, make, and find your next answer.</p></div>
+          <div class="content-heading"><p class="eyebrow">A LITTLE MORE CAPABLE</p><h1 id="discover-title">Explore</h1><p class="intro-copy">Your tools, thoughtfully arranged. Search for a capability or browse a collection.</p></div>
           <label class="conversation-search discover-search"><span aria-hidden="true">⌕</span><span class="visually-hidden">Search tools</span><input id="discover-search" type="search" placeholder="Search tools and capabilities" autocomplete="off"></label>
           <div class="discover-grid" id="discover-grid">
-            <button class="discover-card" type="button" data-screen="live-search" data-tool="search deep research"><span class="discover-icon aqua">⌕</span><strong>Search &amp; research</strong><small>Find current sources and follow the evidence.</small><span class="tool-status available">Wikipedia ready · web setup needed</span></button>
-            <button class="discover-card" type="button" data-screen="image-generator" data-tool="image studio generation"><span class="discover-icon violet">◌</span><strong>Image Studio</strong><small>Turn a detailed prompt into an image.</small><span class="tool-status" id="discover-image-status">Check setup</span></button>
-            <button class="discover-card" type="button" data-screen="file-analyzer" data-tool="files pdf docx text csv ocr"><span class="discover-icon aqua">▧</span><strong>File analysis</strong><small>Inspect a document or image.</small><span class="tool-status">Preview only</span></button>
-            <button class="discover-card" type="button" data-screen="chat" data-tool="coding code developer"><span class="discover-icon violet">⌘</span><strong>Coding assistant</strong><small>Explore an idea or work through code.</small><span class="tool-status">Provider required</span></button>
-            <button class="discover-card" type="button" data-screen="chat" data-tool="study flashcards learning"><span class="discover-icon aqua">▤</span><strong>Study mode</strong><small>Break a topic into clear learning steps.</small><span class="tool-status">Provider required</span></button>
-            <button class="discover-card" type="button" data-screen="projects" data-tool="agent tasks automation"><span class="discover-icon violet">◎</span><strong>Agent tasks</strong><small>Plan a workflow with explicit review.</small><span class="tool-status unavailable">Not connected</span></button>
+            <section class="tool-group" aria-labelledby="tool-group-create">
+              <h2 id="tool-group-create">Create &amp; think</h2>
+              <div class="tool-group-grid">
+                <button class="discover-card" type="button" data-screen="chat" data-tool="coding code developer writing assistant"><span class="discover-icon violet">⌘</span><strong>AI conversation</strong><small>Writing, coding, planning, and everyday questions.</small><span class="tool-status">Provider required</span></button>
+                <button class="discover-card" type="button" data-screen="chat" data-tool="study flashcards learning tutor"><span class="discover-icon aqua">▤</span><strong>Study mode</strong><small>Break a topic into clear learning steps.</small><span class="tool-status">Provider required</span></button>
+                <button class="discover-card" type="button" data-screen="projects" data-tool="app builder project build code"><span class="discover-icon violet">⌘</span><strong>App builder</strong><small>Explore a project idea and its build-service status.</small><span class="tool-status unavailable">Build service not connected</span></button>
+                <button class="discover-card" type="button" data-screen="voice-mode" data-tool="voice conversation microphone speech"><span class="discover-icon aqua">♫</span><strong>Voice conversation</strong><small>Speak with editable, push-to-talk input.</small><span class="tool-status">Device speech support</span></button>
+              </div>
+            </section>
+            <section class="tool-group" aria-labelledby="tool-group-research">
+              <h2 id="tool-group-research">Research &amp; creation</h2>
+              <div class="tool-group-grid">
+                <button class="discover-card" type="button" data-screen="live-search" data-tool="search deep research wikipedia internet sources"><span class="discover-icon aqua">⌕</span><strong>Search &amp; research</strong><small>Find current sources and browse Wikipedia.</small><span class="tool-status available">Wikipedia ready · web setup needed</span></button>
+                <button class="discover-card" type="button" data-screen="weather" data-tool="weather forecast location local time"><span class="discover-icon aqua">◌</span><strong>Weather &amp; local time</strong><small>Look up a place or use your location with permission.</small><span class="tool-status">Location optional</span></button>
+                <button class="discover-card" type="button" data-screen="image-generator" data-tool="image studio generation art create"><span class="discover-icon violet">◌</span><strong>Image Studio</strong><small>Create images with your configured provider.</small><span class="tool-status" id="discover-image-status">Check setup</span></button>
+                <button class="discover-card" type="button" data-screen="image-gallery" data-tool="image gallery saved images"><span class="discover-icon violet">▧</span><strong>Image gallery</strong><small>Review, download, and retry saved images.</small><span class="tool-status">On this device</span></button>
+                <button class="discover-card" type="button" data-screen="file-analyzer" data-tool="files pdf docx text csv ocr analyze attachment"><span class="discover-icon aqua">▧</span><strong>File analyzer</strong><small>Inspect a supported file locally; analysis is not connected.</small><span class="tool-status">Local preview</span></button>
+                <button class="discover-card" type="button" data-screen="modules" data-tool="modules toolkit all capabilities"><span class="discover-icon violet">✳</span><strong>Browse all modules</strong><small>See the complete ZeroGravity module list.</small><span class="tool-status">All modules</span></button>
+              </div>
+            </section>
+            <section class="tool-group" aria-labelledby="tool-group-personal">
+              <h2 id="tool-group-personal">Your space &amp; devices</h2>
+              <div class="tool-group-grid">
+                <button class="discover-card" type="button" data-screen="memory" data-tool="memory personalization history preferences saved facts"><span class="discover-icon violet">◈</span><strong>Memory &amp; personalization</strong><small>Manage saved facts, preferences, and sharing.</small><span class="tool-status">Stored on this device</span></button>
+                <button class="discover-card" type="button" data-screen="chats" data-tool="chat history conversations search pinned archived"><span class="discover-icon aqua">▤</span><strong>Conversation history</strong><small>Search, pin, archive, and revisit chats.</small><span class="tool-status">Stored on this device</span></button>
+                <button class="discover-card" type="button" data-screen="settings" data-settings-target="#phone-actions" data-tool="phone android device automation calls calendar alarms notifications media"><span class="discover-icon violet">⌑</span><strong>Connected devices</strong><small>Review Android actions, permissions, and command history.</small><span class="tool-status">Android bridge when available</span></button>
+                <button class="discover-card" type="button" data-screen="models" data-tool="models ai defaults offline local inference"><span class="discover-icon aqua">✳</span><strong>Models &amp; AI defaults</strong><small>Review provider-backed model and offline status.</small><span class="tool-status">Provider dependent</span></button>
+                <button class="discover-card" type="button" data-screen="api-connections" data-tool="api connections provider keys integrations endpoints"><span class="discover-icon violet">⠿</span><strong>Provider connections</strong><small>Configure capability-specific API connections.</small><span class="tool-status">Session-only credentials</span></button>
+                <button class="discover-card" type="button" data-screen="profile" data-tool="profile account sign in guest authentication"><span class="discover-icon aqua">◉</span><strong>Profile &amp; account</strong><small>Use this device as a guest or review sign-in status.</small><span class="tool-status">Guest · this device</span></button>
+              </div>
+            </section>
           </div>
+          <p id="discover-empty" class="empty-state-copy" role="status" hidden>No tools match that search. Try another name or capability.</p>
           <section class="discover-recent"><div class="home-section-heading"><h2>Recent activity</h2><button type="button" data-screen="chats">View chats ↗</button></div><p id="discover-recent-copy">Your recent tools and conversations will show up here.</p></section>
         </section>
 
@@ -589,7 +616,16 @@
           <div class="content-heading">
             <p class="eyebrow"><span class="live-dot"></span> MAKE IT YOURS</p>
             <h1 id="settings-title">Settings</h1>
-            <p class="intro-copy">A few ways to settle into your space.</p>
+            <p class="intro-copy">Your AI, privacy, device, and app preferences in one place.</p>
+            <nav class="settings-shortcuts" aria-label="Settings sections">
+              <button class="secondary-button" type="button" data-screen="settings" data-settings-target="#voice-settings-title">Voice &amp; AI</button>
+              <button class="secondary-button" type="button" data-screen="api-connections">Connections</button>
+              <button class="secondary-button" type="button" data-screen="models">Models</button>
+              <button class="secondary-button" type="button" data-screen="settings" data-settings-target="#offline-settings-title">Offline &amp; data</button>
+              <button class="secondary-button" type="button" data-screen="settings" data-settings-target="#phone-actions-title">Devices &amp; automation</button>
+              <button class="secondary-button" type="button" data-screen="memory">Memory &amp; privacy</button>
+              <button class="secondary-button" type="button" data-screen="profile">Account</button>
+            </nav>
           </div>
           <div class="settings-list">
             <div class="setting-row">
@@ -666,7 +702,7 @@
               <p class="voice-settings-status" id="local-data-message" role="status" aria-live="polite"></p>
             </div>
           </section>
-          <section class="phone-actions" aria-labelledby="phone-actions-title">
+          <section class="phone-actions" id="phone-actions" aria-labelledby="phone-actions-title">
             <div class="own-api-heading">
               <div>
                 <p class="eyebrow">MODULE 09 · EXPLICIT ANDROID ACTIONS</p>
@@ -819,14 +855,32 @@
             <div class="voice-settings-controls">
               <label class="form-field voice-rate-field">
                 <span>Speech rate <output id="voice-rate-value" for="voice-rate-setting">1.0×</output></span>
-                <input id="voice-rate-setting" type="range" min="0.7" max="1.3" step="0.1" value="1">
+                <input id="voice-rate-setting" type="range" min="0.5" max="2" step="0.1" value="1">
+              </label>
+              <label class="form-field">
+                <span>Voice gender preference</span>
+                <select id="voice-gender-setting" aria-label="Voice gender preference">
+                  <option value="any">Any available voice</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                </select>
               </label>
               <label class="form-field">
                 <span>Voice (when supported)</span>
                 <select id="voice-selection" aria-label="Speech voice"></select>
               </label>
+              <label class="form-field">
+                <span>Preview phrase</span>
+                <select id="voice-preview-phrase" aria-label="Preview phrase language">
+                  <option value="en">English</option>
+                  <option value="hi">Hindi</option>
+                  <option value="hinglish">Hinglish</option>
+                </select>
+              </label>
             </div>
             <div class="voice-actions">
+              <button class="secondary-button" id="preview-voice" type="button">Preview voice</button>
+              <button class="secondary-button" id="reset-voice-settings" type="button">Reset voice settings</button>
               <button class="secondary-button voice-settings-toggle" id="settings-voice-input" type="button">Start voice input</button>
               <button class="secondary-button voice-stop-button" id="settings-stop-voice" type="button">Stop speech / input</button>
             </div>
@@ -882,21 +936,21 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3.5 10.5 8.5-7 8.5 7v9a1 1 0 0 1-1 1h-5.2v-6.1h-4.6v6.1H4.5a1 1 0 0 1-1-1v-9Z"/></svg>
           <span>Home</span>
         </button>
-        <button class="nav-item" type="button" data-screen="chats">
+        <button class="nav-item" type="button" data-screen="chat">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v11H9l-5 3v-14Z"/><path d="M8 10h8M8 13.5h5"/></svg>
-          <span>Chats</span>
+          <span>Chat</span>
         </button>
         <button class="nav-item" type="button" data-screen="discover">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.8" cy="10.8" r="6.5"/><path d="m16 16 4.5 4.5M10.8 7.5v6.6M7.5 10.8h6.6"/></svg>
-          <span>Discover</span>
+          <span>Explore</span>
         </button>
-        <button class="nav-item" type="button" data-screen="projects">
+        <button class="nav-item" type="button" data-screen="memory">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="m19.4 15 .1.1a1.8 1.8 0 0 1-2.5 2.5l-.1-.1a1.8 1.8 0 0 0-3 .9v.2a1.8 1.8 0 0 1-3.6 0v-.2a1.8 1.8 0 0 0-3-.9l-.1.1a1.8 1.8 0 0 1-2.5-2.5l.1-.1a1.8 1.8 0 0 0-.9-3h-.2a1.8 1.8 0 0 1 0-3.6h.2a1.8 1.8 0 0 0 .9-3l-.1-.1a1.8 1.8 0 0 1 2.5-2.5l.1.1a1.8 1.8 0 0 0 3-.9v-.2a1.8 1.8 0 0 1 3.6 0v.2a1.8 1.8 0 0 0 3 .9l.1-.1a1.8 1.8 0 0 1 2.5 2.5l-.1.1a1.8 1.8 0 0 0 .9 3h.2a1.8 1.8 0 0 1 0 3.6h-.2a1.8 1.8 0 0 0-.9 3Z"/></svg>
-          <span>Projects</span>
+          <span>Memory</span>
         </button>
-        <button class="nav-item" type="button" data-screen="profile">
+        <button class="nav-item" type="button" data-screen="settings">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c.6-3.3 3.2-5 7-5s6.4 1.7 7 5"/></svg>
-          <span>Profile</span>
+          <span>Settings</span>
         </button>
       </nav>
     </div>

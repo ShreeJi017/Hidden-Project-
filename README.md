@@ -1,6 +1,6 @@
 # ZeroGravity
 
-ZeroGravity is a lightweight, mobile-first browser app with a responsive home screen, module navigation, accessible settings, and an animated particle orb. Chat and image generation connect to user-configured API providers.
+ZeroGravity is a lightweight, mobile-first browser app with an Android WebView wrapper, responsive Home/Chat/Explore/Memory/Settings destinations, accessible controls, and an animated particle orb. Chat and image generation connect to user-configured API providers.
 
 ## Run
 
@@ -30,7 +30,7 @@ Searching local conversation history does not index arbitrary files. Previously 
 
 Tap **Start voice input** on Home or Chat (or in Settings → Voice) to request microphone permission. Supported browsers use their native speech-recognition API; recognized words appear in the editable chat composer and are not sent until you press **Send**. Recognition is browser-managed and may be processed by the browser vendor. This app does not save audio recordings or forward them to the configured AI provider. Tap **Stop voice** or **Stop listening** to end recognition and release permission-probe microphone tracks.
 
-Enable **spoken replies** in Settings → Voice to have assistant responses read aloud. Speech rate and the available device voice can be selected there. Speech can be stopped from Chat or Settings, and starting voice input interrupts playback. Browser APIs and installed voices vary; use HTTPS (or localhost) and test the target Android browser/device. Automatic voice-activity or background-speech interruption is not implemented.
+Enable **spoken replies** in Settings → Voice to have assistant responses read aloud. Choose an available device voice, preview English/Hindi/Hinglish sample phrases, adjust playback rate (0.5×–2×), and reset voice preferences there. Clear chat instructions such as “switch to a male voice,” “thoda dheere bolo,” and “return to normal speed” are handled locally before AI routing; mixed requests containing another question remain ordinary chat. Gender matching only uses explicit `male`/`female` labels in the device voice name or URI, and otherwise reports the available device voices rather than guessing. Speech can be stopped from Chat or Settings, and starting voice input interrupts playback. Browser APIs and installed voices vary; use HTTPS (or localhost) and test the target Android browser/device. These are not bundled neural voices, Hindi/Hinglish pronunciation and offline availability are not guaranteed, and automatic voice-activity or background-speech interruption is not implemented.
 
 ## Module 5 wake-word foundation
 
@@ -40,7 +40,7 @@ The voice service exposes a `ZeroGravityNativeWakeWord` integration boundary wit
 
 ## Module 1
 
-- Home, Modules, Chat, and Settings views
+- Home, Chat, Explore, Memory, and Settings as the primary destinations, with existing tools and secondary screens kept reachable
 - Canvas-rendered particle sphere with a reduced-motion setting
 - Adjustable orb brightness, persisted locally
 - Responsive layout with safe-area spacing
@@ -60,7 +60,7 @@ Permission requests occur only after an invoked action requires one. Calls displ
 - Access to Google's Maven repository, Maven Central, and the Gradle distribution service on the first build.
 - An Android device/emulator for installation and runtime validation.
 
-The existing Kotlin app is the Android wrapper; its application ID is `com.zerogravity.android`, display name is **ZeroGravity**, and version is `0.1.0` (version code 1). Android SDK Platform 36, Build Tools 36.0.0, JDK 17, and Gradle 8.13 are configured. No launcher artwork exists in the project, so no replacement icon was generated.
+The existing Kotlin app is the Android wrapper; its application ID is `com.zerogravity.android`, display name is **ZeroGravity**, and version is `0.1.0` (version code 1). Android SDK Platform 36, Build Tools 36.0.0, JDK 17, and Gradle 8.13 are configured. Its launcher uses a pure-black background and centered white **Zero** word, with density-specific PNGs for legacy launchers and an adaptive icon for Android 8.0 and newer. The system launch window uses the same black background.
 
 From the repository root, open `android/` in Android Studio and sync Gradle, or build with the included wrapper:
 
@@ -75,7 +75,7 @@ Install a successfully built debug APK on a connected device with:
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 ```
 
-The Android build packages the existing HTML, JavaScript, and CSS locally for offline screen loading; remote APIs still need network access. The WebView keeps file/content access disabled, restricts its JavaScript bridges to the trusted bundled origin, requests microphone/location permissions only after a trusted page requests those features, and opens external HTTP(S) links in an installed browser. Back navigation returns through previously visited app screens. The manifest requests only Internet, microphone, phone-call, and location permissions used by existing features; sensitive permissions are requested at runtime only when invoked. Notifications use Android's separately user-approved notification-listener access. The wrapper uses the platform's default launcher icon because no app icon assets are present.
+The Android build packages the existing HTML, JavaScript, and CSS locally for offline screen loading; remote APIs still need network access. The WebView keeps arbitrary file/content access disabled, restricts its JavaScript bridges and system file picker to the trusted bundled origin, and returns user-selected document URIs only to the active file input. The Android system document picker supports local file inspection and JSON memory import without broad storage permissions. External HTTP(S) links open in an installed browser, and Back navigation returns through previously visited app screens. The manifest requests only Internet, microphone, phone-call, and location permissions used by existing features; sensitive permissions are requested at runtime only when invoked. Approximate location is sufficient when the user declines precise access. Notifications use Android's separately user-approved notification-listener access.
 
 GitHub Actions builds the debug APK on pushes, pull requests, and manual runs using Java 17 and Android SDK 36. To download it, open the successful **Android debug APK** run under the repository's **Actions** tab and download the `zerogravity-debug-apk` artifact (retained for 14 days). The workflow is [`.github/workflows/android-apk.yml`](./.github/workflows/android-apk.yml); it needs no signing or provider secrets. A debug artifact is not a Play Store release APK.
 

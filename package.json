@@ -4,7 +4,7 @@
   "description": "A mobile-first browser app with an animated particle orb and user-configured AI chat providers.",
   "main": "app.js",
   "scripts": {
-    "test": "node --test tests/phone-actions.test.js tests/image-generation.test.js tests/live-data.test.js tests/memory-services.test.js tests/android-project.test.js && node tests/validate.js"
+    "test": "node --test tests/phone-actions.test.js tests/image-generation.test.js tests/live-data.test.js tests/memory-services.test.js tests/voice-settings.test.js tests/android-project.test.js && node tests/validate.js"
   },
   "repository": {
     "type": "git",

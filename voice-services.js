@@ -158,7 +158,7 @@
       const utterance = new window.SpeechSynthesisUtterance(text);
       const selectedVoice = getVoices().find((voice) => voice.voiceURI === options.voiceURI);
       if (selectedVoice) utterance.voice = selectedVoice;
-      utterance.rate = Math.max(0.7, Math.min(1.3, Number(options.rate) || 1));
+      utterance.rate = Math.max(0.5, Math.min(2, Number(options.rate) || 1));
       currentCallbacks = callbacks;
 
       utterance.onstart = () => {

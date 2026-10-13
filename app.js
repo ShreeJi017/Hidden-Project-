@@ -7,7 +7,10 @@ const motionSetting = document.querySelector('#motion-setting');
 const glowSetting = document.querySelector('#glow-setting');
 const glowValue = document.querySelector('#glow-value');
 const reducedMotionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-let activeScreen = document.querySelector('.screen:not([hidden])')?.id.replace(/^screen-/, '') || 'home';
+const requestedScreen = window.location.hash.replace(/^#screen-/, '');
+let activeScreen = screens.some((screen) => screen.id === `screen-${requestedScreen}`)
+  ? requestedScreen
+  : document.querySelector('.screen:not([hidden])')?.id.replace(/^screen-/, '') || 'home';
 window.history.replaceState({ screen: activeScreen }, '', window.location.href);
 
 function readPreferences() {
@@ -40,6 +43,8 @@ function savePreferences() {
       voiceReplies: voiceRepliesEnabled,
       speechRate,
       speechVoiceURI,
+      speechVoiceGender,
+      previousSpeechVoiceURI,
       wakeWordEnabled,
       wakeWordPhrase,
       wakeWordSensitivity,
@@ -61,18 +66,19 @@ function setScreen(name, { pushHistory = true } = {}) {
   });
 
   const primaryDestination = ({
-    chat: 'chats',
+    chats: 'chat',
     'voice-mode': 'home',
     modules: 'discover',
+    projects: 'discover',
+    'file-analyzer': 'discover',
     'image-generator': 'discover',
     'image-gallery': 'discover',
     'live-search': 'discover',
     weather: 'discover',
-    'file-analyzer': 'discover',
-    'api-connections': 'profile',
-    models: 'profile',
-    memory: 'profile',
-    settings: 'profile'
+    'api-connections': 'settings',
+    models: 'settings',
+    profile: 'settings',
+    authentication: 'settings'
   })[name] || name;
   navItems.forEach((item) => {
     const isActive = item.dataset.screen === primaryDestination;
@@ -94,7 +100,16 @@ window.addEventListener('popstate', (event) => {
 });
 
 screenButtons.forEach((button) => {
-  button.addEventListener('click', () => setScreen(button.dataset.screen));
+  button.addEventListener('click', () => {
+    setScreen(button.dataset.screen);
+    const target = button.dataset.settingsTarget;
+    if (target) {
+      document.querySelector(target)?.scrollIntoView({
+        behavior: motionEnabled ? 'smooth' : 'auto',
+        block: 'start'
+      });
+    }
+  });
 });
 
 function makePoints(count) {
@@ -226,7 +241,7 @@ reducedMotionQuery.addEventListener('change', (event) => {
 });
 
 new ResizeObserver(resizeCanvas).observe(canvas);
-setScreen('home');
+setScreen(activeScreen, { pushHistory: false });
 
 const chatForm = document.querySelector('#chat-form');
 const chatInput = document.querySelector('#chat-input');
@@ -288,6 +303,8 @@ const voiceRepliesSetting = document.querySelector('#voice-replies-setting');
 const speechRateSetting = document.querySelector('#voice-rate-setting');
 const speechRateValue = document.querySelector('#voice-rate-value');
 const speechVoiceSelect = document.querySelector('#voice-selection');
+const speechVoiceGenderSetting = document.querySelector('#voice-gender-setting');
+const speechPreviewPhrase = document.querySelector('#voice-preview-phrase');
 const voiceSettingsStatus = document.querySelector('#voice-settings-status');
 const phoneCapabilityList = document.querySelector('#phone-capability-list');
 const phoneBridgeState = document.querySelector('#phone-bridge-state');
@@ -297,6 +314,7 @@ const phoneCommandStatus = document.querySelector('#phone-command-status');
 const phoneCommandHistoryList = document.querySelector('#phone-command-history-list');
 const voiceRecognitionService = window.ZeroGravityVoice.createSpeechRecognitionService();
 const speechSynthesisService = window.ZeroGravityVoice.createSpeechSynthesisService();
+const voiceSettingsService = window.ZeroGravityVoiceSettings;
 const wakeWordService = window.ZeroGravityVoice.createWakeWordService();
 const listeningModeManager = window.ZeroGravityVoice.createListeningModeManager();
 const phoneActionService = window.ZeroGravityPhoneActions;
@@ -305,6 +323,12 @@ const phoneCommandHistory = [];
 let voiceRepliesEnabled = savedPreferences.voiceReplies === true;
 let speechRate = Number(savedPreferences.speechRate) || 1;
 let speechVoiceURI = typeof savedPreferences.speechVoiceURI === 'string' ? savedPreferences.speechVoiceURI : '';
+let speechVoiceGender = ['male', 'female'].includes(savedPreferences.speechVoiceGender)
+  ? savedPreferences.speechVoiceGender
+  : 'any';
+let previousSpeechVoiceURI = typeof savedPreferences.previousSpeechVoiceURI === 'string'
+  ? savedPreferences.previousSpeechVoiceURI
+  : '';
 let wakeWordEnabled = savedPreferences.wakeWordEnabled === true;
 let wakeWordPhrase = typeof savedPreferences.wakeWordPhrase === 'string' ? savedPreferences.wakeWordPhrase : 'Hey ZeroGravity';
 let wakeWordSensitivity = Number.isFinite(Number(savedPreferences.wakeWordSensitivity))
@@ -1635,15 +1659,21 @@ async function toggleWakeWordListening() {
   }
 }
 
-function speakAssistantText(text, messageId = '') {
+function speakAssistantText(text, messageId = '', rateOverride = null, onComplete = null) {
   activeSpeechToken += 1;
   const speechToken = activeSpeechToken;
+  let completionCalled = false;
+  const complete = () => {
+    if (completionCalled) return;
+    completionCalled = true;
+    onComplete?.();
+  };
   listeningModeManager.setMode(listeningModeManager.modes.ACTIVE_CONVERSATION);
   voiceRecognitionService.stop();
   activeSpeechMessageId = messageId;
   try {
     const started = speechSynthesisService.speak(text, {
-      rate: window.ZeroGravityMemoryUI?.getVoiceRate(speechRate) ?? speechRate,
+      rate: rateOverride ?? window.ZeroGravityMemoryUI?.getVoiceRate(speechRate) ?? speechRate,
       voiceURI: speechVoiceURI
     }, {
       onStart() {
@@ -1659,6 +1689,7 @@ function speakAssistantText(text, messageId = '') {
           listeningModeManager.setMode(listeningModeManager.modes.DISABLED);
         }
         setVoiceSettingsStatus('Speech playback complete.');
+        complete();
       },
       onError(message) {
         if (speechToken !== activeSpeechToken) return;
@@ -1668,16 +1699,19 @@ function speakAssistantText(text, messageId = '') {
           listeningModeManager.setMode(listeningModeManager.modes.DISABLED);
         }
         setVoiceSettingsStatus(message, 'error');
+        complete();
       }
     });
     if (!started) {
       activeSpeechMessageId = '';
       setVoiceState('idle');
+      complete();
     }
   } catch (error) {
     activeSpeechMessageId = '';
     setVoiceState('idle');
     setVoiceSettingsStatus(error.message, 'error');
+    complete();
   }
 }
 
@@ -1692,7 +1726,59 @@ function populateSpeechVoices() {
   speechVoiceSelect.disabled = !speechSynthesisService.isSupported() || voices.length === 0;
 }
 
-async function requestAssistantReply(conversation, userMessageId) {
+function applyVoiceSettingsIntent(intent) {
+  const voices = speechSynthesisService.getVoices();
+  let confirmation;
+  let shouldSpeak = true;
+  if (intent.type === 'stop') {
+    activeSpeechToken += 1;
+    activeSpeechMessageId = '';
+    speechSynthesisService.stop();
+    setVoiceState('idle');
+    confirmation = 'Speech stopped.';
+    shouldSpeak = false;
+  } else if (intent.type === 'speed-set') {
+    speechRate = Math.max(voiceSettingsService.MIN_RATE, Math.min(voiceSettingsService.MAX_RATE, intent.rate));
+    speechRateSetting.value = String(speechRate);
+    speechRateValue.value = `${speechRate.toFixed(1)}×`;
+    confirmation = `I’ll speak at ${speechRate.toFixed(1)} times normal speed.`;
+  } else if (intent.type === 'voice-gender') {
+    speechVoiceGender = intent.gender;
+    speechVoiceGenderSetting.value = speechVoiceGender;
+    const match = voiceSettingsService.findGenderVoice(voices, intent.gender);
+    if (!match) {
+      const available = voices.map(voiceSettingsService.getVoiceLabel);
+      confirmation = available.length
+        ? `No available device voice identifies itself as ${intent.gender}. Available voices: ${available.join(', ')}.`
+        : 'No device speech voices are currently available. You can review device voice settings or choose another voice later.';
+    } else {
+      previousSpeechVoiceURI = speechVoiceURI;
+      speechVoiceURI = match.voiceURI;
+      speechVoiceSelect.value = speechVoiceURI;
+      confirmation = `I’ll use ${voiceSettingsService.getVoiceLabel(match)}.`;
+    }
+  } else {
+    const match = intent.type === 'voice-previous'
+      ? voiceSettingsService.findPreviousVoice(voices, previousSpeechVoiceURI)
+      : voiceSettingsService.findNextVoice(voices, speechVoiceURI);
+    if (!match) {
+      confirmation = intent.type === 'voice-previous'
+        ? 'There is no previous available voice to return to.'
+        : 'No device speech voices are currently available.';
+    } else {
+      previousSpeechVoiceURI = speechVoiceURI;
+      speechVoiceURI = match.voiceURI;
+      speechVoiceGender = voiceSettingsService.voiceGender(match) || 'any';
+      speechVoiceSelect.value = speechVoiceURI;
+      speechVoiceGenderSetting.value = speechVoiceGender;
+      confirmation = `I’ll use ${voiceSettingsService.getVoiceLabel(match)}.`;
+    }
+  }
+  savePreferences();
+  return { confirmation, shouldSpeak };
+}
+
+async function requestAssistantReply(conversation, userMessageId, questionOverride = '') {
   if (requestInFlight) return;
 
   const responseVoiceInteractionToken = voiceInteractionToken;
@@ -1714,7 +1800,10 @@ async function requestAssistantReply(conversation, userMessageId) {
     .slice(0, userIndex + 1)
     .filter((message) => !['local-tool', 'local-model', 'offline-only', 'memory'].includes(message.source))
     .filter((message) => ['user', 'assistant'].includes(message.role))
-    .map(({ role, content }) => ({ role, content }));
+    .map(({ id, role, content }) => ({
+      role,
+      content: id === userMessageId && questionOverride ? questionOverride : content
+    }));
 
   requestInFlight = true;
   setVoiceState('thinking');
@@ -1727,7 +1816,9 @@ async function requestAssistantReply(conversation, userMessageId) {
   let replyMessageId = '';
   let responseMemoryInfluence = [];
   try {
-    const currentUserText = conversation.messages.find((message) => message.id === userMessageId)?.content || '';
+    const currentUserText = questionOverride
+      || conversation.messages.find((message) => message.id === userMessageId)?.content
+      || '';
     const memoryIsEnabled = window.ZeroGravityMemoryUI?.getPreferences().memoryEnabled !== false;
     const legacyMemoryCommand = !privateConversationMode && memoryIsEnabled && /^(?:remember that\s+.+|save to local memory\s+.+|read local memory|show local memory|what is in local memory|forget local memory|clear local memory|delete local memory)$/i
       .test(currentUserText.trim());
@@ -1927,6 +2018,30 @@ chatForm.addEventListener('submit', async (event) => {
     phoneActionInFlight = false;
     renderChat();
     setChatNotice(result.message, result.status === 'success' ? 'success' : 'error');
+    return;
+  }
+  const voiceIntent = voiceSettingsService.parseIntent(content, speechRate);
+  if (voiceIntent) {
+    const result = applyVoiceSettingsIntent(voiceIntent);
+    conversation.messages.push({
+      id: makeId(),
+      role: 'assistant',
+      source: 'voice-control',
+      content: result.confirmation
+    });
+    conversation.updatedAt = Date.now();
+    persistConversations();
+    renderChat();
+    setChatNotice(result.confirmation, result.shouldSpeak ? 'success' : '');
+    if (result.shouldSpeak) {
+      const rateOverride = voiceIntent.type === 'speed-set' ? speechRate : null;
+      const requestFollowUp = voiceIntent.followUp
+        ? () => requestAssistantReply(conversation, message.id, voiceIntent.followUp)
+        : null;
+      speakAssistantText(result.confirmation, '', rateOverride, requestFollowUp);
+    } else if (voiceIntent.followUp) {
+      requestAssistantReply(conversation, message.id, voiceIntent.followUp);
+    }
     return;
   }
   requestAssistantReply(conversation, message.id);
@@ -2207,9 +2322,10 @@ document.querySelector('#wake-word-stop').addEventListener('click', async () => 
 });
 
 voiceRepliesSetting.checked = voiceRepliesEnabled;
-speechRate = Math.max(0.7, Math.min(1.3, speechRate));
+speechRate = Math.max(voiceSettingsService.MIN_RATE, Math.min(voiceSettingsService.MAX_RATE, speechRate));
 speechRateSetting.value = String(speechRate);
 speechRateValue.value = `${speechRate.toFixed(1)}×`;
+speechVoiceGenderSetting.value = speechVoiceGender;
 populateSpeechVoices();
 speechVoiceSelect.value = speechVoiceURI;
 const wakeWordEnabledSetting = document.querySelector('#wake-word-enabled');
@@ -2245,8 +2361,64 @@ speechRateSetting.addEventListener('input', () => {
 });
 
 speechVoiceSelect.addEventListener('change', () => {
+  previousSpeechVoiceURI = speechVoiceURI;
   speechVoiceURI = speechVoiceSelect.value;
+  const selectedVoice = speechSynthesisService.getVoices().find((voice) => voice.voiceURI === speechVoiceURI);
+  speechVoiceGender = voiceSettingsService.voiceGender(selectedVoice) || 'any';
+  speechVoiceGenderSetting.value = speechVoiceGender;
   savePreferences();
+});
+
+speechVoiceGenderSetting.addEventListener('change', () => {
+  speechVoiceGender = speechVoiceGenderSetting.value;
+  if (speechVoiceGender === 'any') {
+    savePreferences();
+    setVoiceSettingsStatus('Any available device voice may be selected.', 'success');
+    return;
+  }
+  const match = voiceSettingsService.findGenderVoice(speechSynthesisService.getVoices(), speechVoiceGender);
+  if (!match) {
+    savePreferences();
+    setVoiceSettingsStatus(`No available device voice explicitly identifies as ${speechVoiceGender}. Voice names and gender metadata depend on the device.`, 'error');
+    return;
+  }
+  previousSpeechVoiceURI = speechVoiceURI;
+  speechVoiceURI = match.voiceURI;
+  speechVoiceSelect.value = speechVoiceURI;
+  savePreferences();
+  setVoiceSettingsStatus(`Selected ${voiceSettingsService.getVoiceLabel(match)}.`, 'success');
+});
+
+document.querySelector('#preview-voice').addEventListener('click', () => {
+  const samples = {
+    en: 'Hello, this is a preview of the selected voice.',
+    hi: 'नमस्ते, यह चुनी हुई आवाज़ का नमूना है।',
+    hinglish: 'Namaste, yeh selected voice ka preview hai.'
+  };
+  if (!speechSynthesisService.isSupported()) {
+    setVoiceSettingsStatus('Speech playback is unavailable in this browser.', 'error');
+    return;
+  }
+  try {
+    speechSynthesisService.speak(samples[speechPreviewPhrase.value], { rate: speechRate, voiceURI: speechVoiceURI });
+    setVoiceSettingsStatus('Playing a preview with the selected device voice. Language pronunciation depends on that voice.', 'success');
+  } catch (error) {
+    setVoiceSettingsStatus(error.message, 'error');
+  }
+});
+
+document.querySelector('#reset-voice-settings').addEventListener('click', () => {
+  speechRate = voiceSettingsService.DEFAULT_RATE;
+  speechVoiceURI = '';
+  previousSpeechVoiceURI = '';
+  speechVoiceGender = 'any';
+  speechRateSetting.value = String(speechRate);
+  speechRateValue.value = `${speechRate.toFixed(1)}×`;
+  speechVoiceGenderSetting.value = speechVoiceGender;
+  populateSpeechVoices();
+  savePreferences();
+  speechSynthesisService.stop();
+  setVoiceSettingsStatus('Voice settings reset to the device default voice and normal speed.', 'success');
 });
 
 wakeWordEnabledSetting.addEventListener('change', () => {
@@ -2585,6 +2757,12 @@ document.querySelector('#discover-search').addEventListener('input', (event) => 
   document.querySelectorAll('.discover-card').forEach((card) => {
     card.hidden = Boolean(query) && !card.dataset.tool.includes(query);
   });
+  document.querySelectorAll('.tool-group').forEach((group) => {
+    group.hidden = !group.querySelector('.discover-card:not([hidden])');
+  });
+  document.querySelector('#discover-empty').hidden = Boolean(
+    document.querySelector('.discover-card:not([hidden])')
+  );
 });
 document.querySelectorAll('.connection-row[data-provider-function]').forEach((row) => {
   row.addEventListener('click', () => {

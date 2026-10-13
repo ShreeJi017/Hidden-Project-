@@ -41,10 +41,12 @@ class PermissionManager(private val activity: MainActivity) {
     private var pendingResult: ((CapabilityPermissionResult) -> Unit)? = null
     private var pendingCapability: AndroidCapability? = null
 
-    fun hasPermission(capability: AndroidCapability): Boolean =
-        capability.permissions.all { permission ->
+    fun hasPermission(capability: AndroidCapability): Boolean {
+        val grants = capability.permissions.map { permission ->
             activity.checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED
         }
+        return if (capability == AndroidCapability.LOCATION) grants.any { it } else grants.all { it }
+    }
 
     fun requestForUserAction(
         capability: AndroidCapability,
@@ -80,7 +82,7 @@ class PermissionManager(private val activity: MainActivity) {
         callback(
             CapabilityPermissionResult(
                 capability = capability,
-                state = if (denied.isEmpty()) PermissionState.GRANTED else PermissionState.DENIED,
+                state = if (hasPermission(capability)) PermissionState.GRANTED else PermissionState.DENIED,
                 deniedPermissions = denied
             )
         )

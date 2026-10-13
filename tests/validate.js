@@ -34,6 +34,21 @@ function serveStatic(request, response) {
 
 }
 
+async function openScreen(page, screen) {
+  if (screen === 'home') {
+    await page.locator('.nav-item[data-screen="home"]').click();
+  } else if (screen === 'settings') {
+    await page.locator('.nav-item[data-screen="settings"]').click();
+  } else if (screen === 'chat') {
+    await page.locator('.nav-item[data-screen="chat"]').click();
+  } else if (screen === 'modules') {
+    await page.locator('.nav-item[data-screen="discover"]').click();
+    await page.locator('#screen-discover [data-screen="modules"]').click();
+  } else {
+    throw new Error(`Unsupported test screen: ${screen}`);
+  }
+}
+
 async function main() {
   const server = http.createServer(serveStatic);
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
@@ -60,6 +75,7 @@ async function main() {
     await page.addInitScript(() => {
       window.__recognitions = [];
       window.__spokenText = [];
+      window.__spokenRates = [];
       window.__speechCancelCount = 0;
       window.__microphoneTracksStopped = 0;
       window.__microphonePermissionRequests = 0;
@@ -97,7 +113,11 @@ async function main() {
       };
       const speechSynthesisMock = {
         speaking: false,
-        voices: [{ name: 'Test Voice', lang: 'en-US', voiceURI: 'test-voice' }],
+        voices: [
+          { name: 'Test Voice', lang: 'en-US', voiceURI: 'test-voice' },
+          { name: 'English Male', lang: 'en-US', voiceURI: 'male-voice' },
+          { name: 'English Female', lang: 'en-US', voiceURI: 'female-voice' }
+        ],
         getVoices() {
           return this.voices;
         },
@@ -106,6 +126,7 @@ async function main() {
           this.currentUtterance = utterance;
           this.speaking = true;
           window.__spokenText.push(utterance.text);
+          window.__spokenRates.push(utterance.rate);
           utterance.onstart?.();
         },
         cancel() {
@@ -250,6 +271,40 @@ async function main() {
     if (await page.evaluate(() => window.__microphonePermissionRequests) !== 0) {
       throw new Error('The app requested microphone permission before the user activated voice input');
     }
+    const wordmark = await page.evaluate(() => {
+      const name = document.querySelector('.wordmark-name');
+      const zero = document.querySelector('.wordmark-zero');
+      const gravity = document.querySelector('.wordmark-light');
+      return {
+        text: name.textContent.replace(/\s/g, ''),
+        zeroWeight: getComputedStyle(zero).fontWeight,
+        gravityWeight: getComputedStyle(gravity).fontWeight,
+        whiteSpace: getComputedStyle(name).whiteSpace
+      };
+    });
+    if (wordmark.text !== 'ZeroGravity' || Number(wordmark.zeroWeight) < 700
+      || Number(wordmark.gravityWeight) < 500 || Number(wordmark.gravityWeight) > 600
+      || wordmark.whiteSpace !== 'nowrap') {
+      throw new Error(`Brand wordmark does not meet the ZeroGravity hierarchy: ${JSON.stringify(wordmark)}`);
+    }
+
+    const deepLinkPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    await deepLinkPage.goto(`http://127.0.0.1:${port}/#screen-api-connections`, { waitUntil: 'networkidle' });
+    if (await deepLinkPage.locator('#screen-api-connections').isHidden()
+      || await deepLinkPage.locator('.nav-item[aria-current="page"]').getAttribute('data-screen') !== 'settings') {
+      throw new Error('API Connections deep link did not open its screen under Settings');
+    }
+    await deepLinkPage.locator('.nav-item[data-screen="settings"]').click();
+    await deepLinkPage.locator('.settings-shortcuts [data-screen="profile"]').click();
+    await deepLinkPage.goBack();
+    if (await deepLinkPage.locator('#screen-settings').isHidden()) {
+      throw new Error('Browser back did not restore the Settings screen');
+    }
+    await deepLinkPage.goBack();
+    if (await deepLinkPage.locator('#screen-api-connections').isHidden()) {
+      throw new Error('Browser back did not restore the prior deep-linked screen');
+    }
+    await deepLinkPage.close();
 
     const stylesheetCount = await page.locator('link[href="styles.css"]').count();
     const scriptCount = await page.locator('script[src="app.js"]').count();
@@ -259,10 +314,11 @@ async function main() {
     const liveDataScriptCount = await page.locator('script[src="live-data.js"]').count();
     const liveDataUIScriptCount = await page.locator('script[src="live-data-ui.js"]').count();
     const voiceScriptCount = await page.locator('script[src="voice-services.js"]').count();
+    const voiceSettingsScriptCount = await page.locator('script[src="voice-settings.js"]').count();
     const offlineScriptCount = await page.locator('script[src="offline-services.js"]').count();
     const phoneActionScriptCount = await page.locator('script[src="phone-actions.js"]').count();
-    if (stylesheetCount !== 1 || scriptCount !== 1 || providerScriptCount !== 1 || imageScriptCount !== 1 || imageUIScriptCount !== 1 || liveDataScriptCount !== 1 || liveDataUIScriptCount !== 1 || voiceScriptCount !== 1 || offlineScriptCount !== 1 || phoneActionScriptCount !== 1) {
-      throw new Error(`Expected app stylesheet and all scripts, got ${stylesheetCount}, ${scriptCount}, ${providerScriptCount}, ${imageScriptCount}, ${imageUIScriptCount}, ${liveDataScriptCount}, ${liveDataUIScriptCount}, ${voiceScriptCount}, ${offlineScriptCount}, ${phoneActionScriptCount}`);
+    if (stylesheetCount !== 1 || scriptCount !== 1 || providerScriptCount !== 1 || imageScriptCount !== 1 || imageUIScriptCount !== 1 || liveDataScriptCount !== 1 || liveDataUIScriptCount !== 1 || voiceScriptCount !== 1 || voiceSettingsScriptCount !== 1 || offlineScriptCount !== 1 || phoneActionScriptCount !== 1) {
+      throw new Error(`Expected app stylesheet and all scripts, got ${stylesheetCount}, ${scriptCount}, ${providerScriptCount}, ${imageScriptCount}, ${imageUIScriptCount}, ${liveDataScriptCount}, ${liveDataUIScriptCount}, ${voiceScriptCount}, ${voiceSettingsScriptCount}, ${offlineScriptCount}, ${phoneActionScriptCount}`);
     }
 
     const offlineBoundaries = await page.evaluate(async () => {
@@ -469,21 +525,62 @@ async function main() {
     }
 
     const navTexts = await page.locator('.nav-item span').allTextContents();
-    if (navTexts.join('|') !== 'Home|Modules|Chat|Settings') {
+    if (navTexts.join('|') !== 'Home|Chat|Explore|Memory|Settings') {
       throw new Error(`Unexpected nav labels: ${navTexts.join(', ')}`);
     }
 
-    await page.locator('.nav-item[data-screen="modules"]').click();
+    const navigationTargets = await page.evaluate(() => {
+      const screenIds = new Set([...document.querySelectorAll('.screen')].map((screen) => screen.id));
+      const missingTargets = [...document.querySelectorAll('[data-screen]')]
+        .map((element) => element.dataset.screen)
+        .filter((target) => !screenIds.has(`screen-${target}`));
+      return {
+        missingTargets,
+        activeHome: document.querySelector('.nav-item[aria-current="page"]')?.dataset.screen
+      };
+    });
+    if (navigationTargets.missingTargets.length || navigationTargets.activeHome !== 'home') {
+      throw new Error(`Navigation has an invalid destination or active state: ${JSON.stringify(navigationTargets)}`);
+    }
+
+    await page.locator('.nav-item[data-screen="discover"]').click();
+    if (await page.locator('#screen-discover').evaluate((el) => el.hidden) !== false) {
+      throw new Error('Explore screen did not become visible');
+    }
+    const toolCount = await page.locator('#discover-grid .discover-card').count();
+    if (toolCount < 16) throw new Error(`Explore should keep every existing tool accessible; found ${toolCount}`);
+    await page.locator('#discover-search').fill('notification access');
+    if (await page.locator('#discover-empty').isHidden()) {
+      throw new Error('Explore should show its empty state when no tools match a search');
+    }
+    await page.locator('#discover-search').fill('weather');
+    if (await page.locator('#discover-grid .discover-card:visible').count() !== 1) {
+      throw new Error('Explore search should filter tools by capability');
+    }
+    await page.locator('#discover-search').fill('');
+    await page.locator('#screen-discover [data-screen="file-analyzer"]').click();
+    await page.locator('#analyzer-file').setInputFiles({
+      name: 'sample-notes.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('This file is used to validate local selection only.')
+    });
+    if (await page.locator('#file-preview-panel').isHidden()
+      || !(await page.locator('#file-preview-name').innerText()).includes('sample-notes.txt')
+      || !(await page.locator('#file-processing-status').innerText()).includes('have not been read, uploaded, or analyzed')) {
+      throw new Error('File selection should show safe local metadata without claiming file analysis');
+    }
+    await page.locator('.nav-item[data-screen="discover"]').click();
+    await page.locator('#screen-discover [data-screen="modules"]').click();
     if (await page.locator('#screen-modules').evaluate((el) => el.hidden) !== false) {
       throw new Error('Modules screen did not become visible');
     }
 
-    await page.locator('.nav-item[data-screen="settings"]').click();
+    await openScreen(page, 'settings');
     if (await page.locator('#screen-settings').evaluate((el) => el.hidden) !== false) {
       throw new Error('Settings screen did not become visible');
     }
 
-    await page.locator('.nav-item[data-screen="home"]').click();
+    await openScreen(page, 'home');
     if (await page.locator('#screen-home').evaluate((el) => el.hidden) !== false) {
       throw new Error('Home screen did not become visible');
     }
@@ -497,13 +594,21 @@ async function main() {
       throw new Error(`Orb did not render as expected: ${JSON.stringify(orbMetrics)}`);
     }
 
-    await page.locator('.nav-item[data-screen="chat"]').click();
+    await openScreen(page, 'chat');
+    if (await page.locator('.nav-item[aria-current="page"]').getAttribute('data-screen') !== 'chat') {
+      throw new Error('Chat destination did not highlight the Chat navigation item');
+    }
+    await page.locator('#screen-chat [data-screen="chats"]').click();
+    if (await page.locator('#screen-chats').isHidden()) {
+      throw new Error('Conversation history is not reachable from Chat');
+    }
+    await openScreen(page, 'chat');
     await page.locator('#chat-form').evaluate((form) => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
     if (apiRequests.length !== 0 || !(await page.locator('#chat-notice').innerText()).startsWith('No provider configured')) {
       throw new Error('An empty chat submission without a provider should be blocked with a helpful notice');
     }
 
-    await page.locator('.nav-item[data-screen="settings"]').click();
+    await openScreen(page, 'settings');
     if (await page.locator('.provider-function-card').count() !== 17) {
       throw new Error('Own API dashboard should show 17 function cards');
     }
@@ -529,7 +634,7 @@ async function main() {
     }
     const phoneCommandPage = await browser.newPage();
     await phoneCommandPage.goto(`http://127.0.0.1:${port}/`, { waitUntil: 'networkidle' });
-    await phoneCommandPage.locator('.nav-item[data-screen="chat"]').click();
+    await openScreen(phoneCommandPage, 'chat');
     await phoneCommandPage.locator('#chat-input').fill('open android settings');
     await phoneCommandPage.locator('#send-message').click();
     await phoneCommandPage.locator('#chat-notice').filter({ hasText: 'A browser cannot control Android apps or phone features.' }).waitFor();
@@ -569,7 +674,7 @@ async function main() {
       throw new Error(`Preferences did not persist after reload: motion=${persistedMotion}, glow=${persistedGlow}, prefs=${JSON.stringify(persistedPrefs)}`);
     }
 
-    await page.locator('.nav-item[data-screen="settings"]').click();
+    await openScreen(page, 'settings');
     await page.locator('#new-provider').click();
     await page.locator('#provider-function-select').selectOption('chat-ai');
     await page.locator('#provider-name').fill('Test provider');
@@ -588,10 +693,10 @@ async function main() {
       || await page.locator('#offline-mode-state').innerText() !== 'Offline-only') {
       throw new Error('Offline-only mode should disable online connection testing and update the displayed mode');
     }
-    await page.locator('.nav-item[data-screen="chat"]').click();
+    await openScreen(page, 'chat');
     await page.locator('#chat-input').fill('calculate 10 - 3');
     await page.locator('#send-message').click();
-    await page.getByText('10 - 3 = 7', { exact: true }).waitFor();
+    await page.locator('#chat-messages').getByText('10 - 3 = 7', { exact: true }).waitFor();
     if (apiRequests.length !== 0
       || !(await page.locator('.chat-message.assistant').last().innerText()).toLowerCase().includes('local tool')) {
       throw new Error(`Offline-only local arithmetic should complete locally without calling the online provider: requests=${apiRequests.length}, assistant=${await page.locator('.chat-message.assistant').last().innerText()}`);
@@ -602,7 +707,7 @@ async function main() {
     if (apiRequests.length !== 0) {
       throw new Error('Offline-only mode sent an unsupported AI request to the configured provider');
     }
-    await page.locator('.nav-item[data-screen="settings"]').click();
+    await openScreen(page, 'settings');
     await page.locator('#offline-mode-setting').selectOption('automatic');
     await page.locator('#test-provider').click();
     await page.waitForFunction(() => !document.querySelector('#api-settings-status').textContent.includes('Testing connection…'));
@@ -630,20 +735,20 @@ async function main() {
       throw new Error('The Chat AI dashboard card did not show its configured provider');
     }
 
-    await page.locator('.nav-item[data-screen="chat"]').click();
+    await openScreen(page, 'chat');
     await page.locator('#chat-input').fill('remember that private offline memory phrase');
     await page.locator('#send-message').click();
-    await page.getByText('Saved locally: private offline memory phrase', { exact: true }).waitFor();
+    await page.locator('#chat-messages').getByText('Saved locally: private offline memory phrase', { exact: true }).waitFor();
     if (apiRequests.length !== 1
       || await page.locator('#local-memory-input').inputValue() !== 'private offline memory phrase') {
       throw new Error('Explicit local memory should be stored on-device without an online request');
     }
     await page.locator('#chat-input').fill('calculate 12 * (3 + 2)');
     await page.locator('#send-message').click();
-    await page.getByText('12 * (3 + 2) = 60', { exact: true }).waitFor();
+    await page.locator('#chat-messages').getByText('12 * (3 + 2) = 60', { exact: true }).waitFor();
     await page.locator('#chat-input').fill('search local history for private offline memory phrase');
     await page.locator('#send-message').click();
-    await page.getByText('Local conversation matches:', { exact: false }).waitFor();
+    await page.locator('#chat-messages').getByText('Local conversation matches:', { exact: false }).waitFor();
     if (apiRequests.length !== 1) {
       throw new Error('Local conversation history search should not call the configured online provider');
     }
@@ -688,7 +793,7 @@ async function main() {
       throw new Error(`Provider errors leaked credential/header values: ${safeError}`);
     }
 
-    await page.locator('.nav-item[data-screen="settings"]').click();
+    await openScreen(page, 'settings');
     await page.locator('.provider-function-card[data-function="custom-api"] .provider-add-function').click();
     await page.locator('#provider-name').fill('Connectivity probe');
     await page.locator('#provider-endpoint').fill(`http://127.0.0.1:${port}/mock-http`);
@@ -732,7 +837,7 @@ async function main() {
     await page.locator('#provider-enabled').check();
     await page.locator('#save-provider').click();
     await page.locator('#api-settings-status').getByText('Provider configuration saved', { exact: false }).waitFor();
-    await page.locator('.nav-item[data-screen="modules"]').click();
+    await openScreen(page, 'modules');
     await page.getByRole('button', { name: 'Open Image Generator' }).click();
     await page.locator('#image-prompt').fill('A small green planet');
     await page.locator('#image-aspect-ratio').selectOption('16:9');
@@ -753,7 +858,7 @@ async function main() {
     await page.locator('#delete-gallery-image').click();
     await page.locator('#image-gallery-empty').waitFor({ state: 'visible' });
 
-    await page.locator('.nav-item[data-screen="settings"]').click();
+    await openScreen(page, 'settings');
     await page.locator('#provider-function-select').selectOption('internet-search');
     await page.locator('#provider-type-select').selectOption('custom-search-json');
     await page.locator('#provider-name').fill('Mock live search');
@@ -821,7 +926,7 @@ async function main() {
     await page.locator('#save-provider').click();
     await page.locator('#api-settings-status').getByText('Provider configuration saved', { exact: false }).waitFor();
 
-    await page.locator('.nav-item[data-screen="modules"]').click();
+    await openScreen(page, 'modules');
     await page.getByRole('button', { name: 'Open Search and Wikipedia' }).click();
     await page.locator('#live-search-query').fill('current events');
     await page.locator('#live-search-form button[type="submit"]').click();
@@ -836,14 +941,14 @@ async function main() {
     await page.locator('#wikipedia-results').getByText('A summary supplied by the Wikipedia API.', { exact: true }).waitFor();
     if (wikipediaRequests !== 1) throw new Error('Wikipedia search did not call its public API exactly once');
 
-    await page.locator('.nav-item[data-screen="chat"]').click();
+    await openScreen(page, 'chat');
     await page.locator('#chat-input').fill('Search the latest information about current events');
     await page.locator('#send-message').click();
     await page.locator('.chat-message.assistant .chat-message-content').last().getByText('Current events report', { exact: false }).waitFor();
     await page.locator('.chat-message-citations a').first().waitFor();
     if (liveSearchRequests.length !== 2) throw new Error('Chat search intent did not use the configured live search provider');
 
-    await page.locator('.nav-item[data-screen="modules"]').click();
+    await openScreen(page, 'modules');
     await page.getByRole('button', { name: 'Open Weather and Local time' }).click();
     await page.locator('#weather-city').fill('Lucknow');
     await page.locator('#weather-city-submit').click();
@@ -868,9 +973,9 @@ async function main() {
     });
     await page.locator('#weather-location').click();
     await page.locator('#weather-status').getByText('Location permission was denied', { exact: false }).waitFor();
-    await page.locator('.nav-item[data-screen="settings"]').click();
+    await openScreen(page, 'settings');
     await page.locator('#offline-mode-setting').selectOption('offline-only');
-    await page.locator('.nav-item[data-screen="modules"]').click();
+    await openScreen(page, 'modules');
     await page.getByRole('button', { name: 'Open Weather and Local time' }).click();
     const requestsBeforeOffline = {
       search: liveSearchRequests.length,
@@ -886,7 +991,7 @@ async function main() {
       throw new Error('Offline-only manual city lookup made a network request');
     }
     await page.locator('#weather-city').fill('Lucknow');
-    await page.locator('.nav-item[data-screen="chat"]').click();
+    await openScreen(page, 'chat');
     await page.locator('#chat-input').fill('Search the latest information about current events');
     await page.locator('#send-message').click();
     await page.locator('.chat-message.assistant .chat-message-content').last().getByText('Cached results', { exact: false }).waitFor();
@@ -907,16 +1012,16 @@ async function main() {
       throw new Error('Offline-only search, Wikipedia, or weather chat routing sent a network request');
     }
 
-    await page.locator('.nav-item[data-screen="settings"]').click();
+    await openScreen(page, 'settings');
     await page.locator('#offline-mode-setting').selectOption('automatic');
-    await page.locator('.nav-item[data-screen="chat"]').click();
+    await openScreen(page, 'chat');
     await page.locator('#chat-input').fill('Please respond.');
     await page.locator('#send-message').click();
     if (!(await page.locator('#send-message').isDisabled()) || !(await page.getByText('Thinking…').isVisible())) {
       throw new Error('The send control and loading state should be visible while a request is processing');
     }
     await page.locator('#chat-form').evaluate((form) => form.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true })));
-    await page.getByText('Mock provider response 2').waitFor();
+    await page.locator('#chat-messages').getByText('Mock provider response 2').waitFor();
     if (!(await page.locator('.chat-message.assistant').last().innerText()).toLowerCase().includes('online · test provider')) {
       throw new Error('Online AI responses should identify that they were processed by the configured provider');
     }
@@ -935,7 +1040,7 @@ async function main() {
     await page.locator('#send-message').click();
     await page.getByRole('button', { name: 'Retry' }).last().waitFor();
     await page.getByRole('button', { name: 'Retry' }).last().click();
-    await page.getByText('Mock provider response 4').waitFor();
+    await page.locator('#chat-messages').getByText('Mock provider response 4').waitFor();
     if (apiRequests.length !== 4) {
       throw new Error(`Expected one connection test, one regular request, one failed request, and one retry; got ${apiRequests.length}`);
     }
@@ -944,9 +1049,9 @@ async function main() {
 
     const conversationId = await page.locator('#conversation-history').inputValue();
     await page.reload({ waitUntil: 'networkidle' });
-    await page.locator('.nav-item[data-screen="chat"]').click();
-    await page.getByText('Mock provider response 2').waitFor();
-    await page.getByText('Mock provider response 4').waitFor();
+    await openScreen(page, 'chat');
+    await page.locator('#chat-messages').getByText('Mock provider response 2').waitFor();
+    await page.locator('#chat-messages').getByText('Mock provider response 4').waitFor();
     const restoredProviderId = await page.locator('#active-provider-select').inputValue();
     if (restoredProviderId !== providerId) {
       throw new Error('The selected active provider did not persist after reload');
@@ -957,9 +1062,9 @@ async function main() {
       throw new Error('New conversation did not preserve the existing conversation in history');
     }
     await page.locator('#conversation-history').selectOption(conversationId);
-    await page.getByText('Mock provider response 4').waitFor();
+    await page.locator('#chat-messages').getByText('Mock provider response 4').waitFor();
 
-    await page.locator('.nav-item[data-screen="settings"]').click();
+    await openScreen(page, 'settings');
     await page.locator('#provider-config-select').selectOption(providerId);
     await page.locator('#provider-key').fill('test-key-not-a-real-secret');
     await page.locator('#save-provider').click();
@@ -972,6 +1077,19 @@ async function main() {
       input.dispatchEvent(new Event('input', { bubbles: true }));
     });
     await page.locator('#voice-selection').selectOption('test-voice');
+    await page.locator('#voice-gender-setting').selectOption('male');
+    if (await page.locator('#voice-selection').inputValue() !== 'male-voice') {
+      throw new Error('The voice gender preference did not select a matching installed voice');
+    }
+    await page.locator('#voice-preview-phrase').selectOption('hi');
+    await page.locator('#preview-voice').click();
+    const preview = await page.evaluate(() => ({
+      text: window.__spokenText.at(-1),
+      rate: window.__spokenRates.at(-1)
+    }));
+    if (preview.text !== 'नमस्ते, यह चुनी हुई आवाज़ का नमूना है।' || preview.rate !== 1.2) {
+      throw new Error(`Hindi voice preview did not use the selected speech rate: ${JSON.stringify(preview)}`);
+    }
     await page.locator('#wake-word-enabled').check();
     await page.locator('#wake-word-phrase').fill('Hey ZeroGravity test');
     if (!(await page.locator('#wake-sensitivity').isDisabled())) {
@@ -986,15 +1104,39 @@ async function main() {
       throw new Error('Unavailable browser wake-word mode should not request microphone permission or change the listening mode');
     }
     const persistedVoiceSettings = await page.evaluate(() => JSON.parse(localStorage.getItem('zerogravity.preferences')));
-    if (persistedVoiceSettings.voiceReplies !== true || persistedVoiceSettings.speechRate !== 1.2 || persistedVoiceSettings.speechVoiceURI !== 'test-voice') {
+    if (persistedVoiceSettings.voiceReplies !== true
+      || persistedVoiceSettings.speechRate !== 1.2
+      || persistedVoiceSettings.speechVoiceURI !== 'male-voice'
+      || persistedVoiceSettings.speechVoiceGender !== 'male'
+      || persistedVoiceSettings.previousSpeechVoiceURI !== 'test-voice') {
       throw new Error(`Voice settings did not persist: ${JSON.stringify(persistedVoiceSettings)}`);
     }
     if (persistedVoiceSettings.wakeWordEnabled !== true || persistedVoiceSettings.wakeWordPhrase !== 'Hey ZeroGravity test') {
       throw new Error(`Wake-word preferences did not persist: ${JSON.stringify(persistedVoiceSettings)}`);
     }
 
-    await page.locator('.nav-item[data-screen="chat"]').click();
+    await openScreen(page, 'chat');
     await page.locator('#new-conversation').click();
+    const requestsBeforeVoiceCommands = apiRequests.length;
+    await page.locator('#chat-input').fill('Switch to a female voice');
+    await page.locator('#send-message').click();
+    await page.locator('#chat-messages').getByText('I’ll use English Female (en-US).', { exact: true }).waitFor();
+    await page.locator('#chat-input').fill('Speak faster');
+    await page.locator('#send-message').click();
+    await page.locator('#chat-messages').getByText('I’ll speak at 1.4 times normal speed.', { exact: true }).waitFor();
+    const commandSettings = await page.evaluate(() => ({
+      preferences: JSON.parse(localStorage.getItem('zerogravity.preferences')),
+      selectedVoice: window.__spokenText.at(-2),
+      selectedVoiceRate: window.__spokenRates.at(-2),
+      speedRate: window.__spokenRates.at(-1)
+    }));
+    if (apiRequests.length !== requestsBeforeVoiceCommands
+      || commandSettings.preferences.speechVoiceURI !== 'female-voice'
+      || commandSettings.preferences.speechRate !== 1.4
+      || commandSettings.selectedVoice !== 'I’ll use English Female (en-US).'
+      || commandSettings.speedRate !== 1.4) {
+      throw new Error(`Chat voice controls did not stay local or apply to playback: ${JSON.stringify(commandSettings)}`);
+    }
     await page.locator('#chat-voice-input').click();
     await page.waitForFunction(() => window.__recognitions.length === 1);
     await page.evaluate(() => {
@@ -1009,7 +1151,7 @@ async function main() {
       throw new Error('Recognized speech was not placed in the editable chat composer');
     }
     await page.locator('#send-message').click();
-    await page.getByText('Mock provider response 5').waitFor();
+    await page.locator('#chat-messages').getByText('Mock provider response 5').waitFor();
     await page.waitForFunction(() => document.querySelector('#voice-state').textContent === 'Speaking');
     if (!(await page.locator('#screen-chat').isVisible())) {
       throw new Error(`Chat screen was hidden while voice state was ${await page.locator('#voice-state').innerText()}`);
@@ -1075,7 +1217,7 @@ async function main() {
     await page.locator('#send-message').click();
     await page.locator('#chat-voice-input').click();
     await page.waitForFunction(() => window.__recognitions.length === 3);
-    await page.getByText('Mock provider response 6').waitFor();
+    await page.locator('#chat-messages').getByText('Mock provider response 6').waitFor();
     const spokenDuringNewInteraction = await page.evaluate(() => window.__spokenText.length);
     if (spokenDuringNewInteraction !== spokenBeforeNewInteraction
       || !(await page.locator('#voice-state').innerText()).startsWith('Listening')) {
@@ -1085,7 +1227,10 @@ async function main() {
 
     await page.reload({ waitUntil: 'networkidle' });
     const voiceSettingsAfterReload = await page.evaluate(() => JSON.parse(localStorage.getItem('zerogravity.preferences')));
-    if (voiceSettingsAfterReload.voiceReplies !== true || voiceSettingsAfterReload.speechRate !== 1.2 || voiceSettingsAfterReload.speechVoiceURI !== 'test-voice') {
+    if (voiceSettingsAfterReload.voiceReplies !== true
+      || voiceSettingsAfterReload.speechRate !== 1.4
+      || voiceSettingsAfterReload.speechVoiceURI !== 'female-voice'
+      || voiceSettingsAfterReload.speechVoiceGender !== 'female') {
       throw new Error(`Voice settings did not remain persisted after reload: ${JSON.stringify(voiceSettingsAfterReload)}`);
     }
     if (voiceSettingsAfterReload.wakeWordEnabled !== true
@@ -1102,6 +1247,7 @@ async function main() {
         value: async () => { throw new DOMException('Permission denied', 'NotAllowedError'); }
       });
     });
+    await openScreen(page, 'home');
     await page.locator('#home-voice-input').click();
     await page.locator('#home-voice-status').getByText('Microphone permission was denied', { exact: false }).waitFor();
     if (await page.locator('#listening-mode-state').innerText() !== 'Disabled'
@@ -1141,7 +1287,7 @@ async function main() {
     await unsupportedPage.locator('#home-voice-status').getByText('Voice input is unavailable in this browser', { exact: false }).waitFor();
     await unsupportedPage.close();
 
-    await page.locator('.nav-item[data-screen="settings"]').click();
+    await openScreen(page, 'settings');
     if (await page.locator('#local-memory-input').inputValue() !== 'private offline memory phrase') {
       throw new Error('Explicit local memory did not persist on this device across reload');
     }
@@ -1165,8 +1311,44 @@ async function main() {
     if (navGeometry.contentWidth > navGeometry.width) {
       throw new Error(`Mobile navigation overflows at 320px: ${JSON.stringify(navGeometry)}`);
     }
+    const headerGeometry = await page.evaluate(() => {
+      const header = document.querySelector('.app-header');
+      const wordmark = document.querySelector('.wordmark-name').getBoundingClientRect();
+      const settings = document.querySelector('.header-settings').getBoundingClientRect();
+      return {
+        width: header.clientWidth,
+        contentWidth: header.scrollWidth,
+        wordmarkRight: wordmark.right,
+        settingsLeft: settings.left
+      };
+    });
+    if (headerGeometry.contentWidth > headerGeometry.width
+      || headerGeometry.wordmarkRight > headerGeometry.settingsLeft) {
+      throw new Error(`Header should keep the wordmark readable without overlap at 320px: ${JSON.stringify(headerGeometry)}`);
+    }
+    await page.locator('.nav-item[data-screen="discover"]').click();
+    const exploreLayout = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth
+    }));
+    if (exploreLayout.document > exploreLayout.viewport) {
+      throw new Error(`Explore screen overflows horizontally at 320px: ${JSON.stringify(exploreLayout)}`);
+    }
+    await page.locator('.nav-item[data-screen="settings"]').click();
+    const settingsLayout = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth
+    }));
+    if (settingsLayout.document > settingsLayout.viewport) {
+      throw new Error(`Settings screen overflows horizontally at 320px: ${JSON.stringify(settingsLayout)}`);
+    }
+    await page.locator('[data-settings-target="#phone-actions-title"]').click();
+    if (await page.locator('#screen-settings').isHidden()
+      || await page.locator('#phone-actions-title').isHidden()) {
+      throw new Error('The devices and automation Settings shortcut did not reach its section');
+    }
 
-    await page.locator('.nav-item[data-screen="modules"]').click();
+    await openScreen(page, 'modules');
     await page.getByRole('button', { name: 'Open Memory and Personalization' }).click();
     await page.evaluate(() => history.back());
     await page.waitForFunction(() => !document.querySelector('#screen-modules').hidden);
@@ -1186,9 +1368,17 @@ async function main() {
     if (memoryLayout.document > memoryLayout.viewport) {
       throw new Error(`Memory screen overflows horizontally at 320px: ${JSON.stringify(memoryLayout)}`);
     }
-    await page.locator('.nav-item[data-screen="settings"]').click();
+    await openScreen(page, 'home');
+    const homeLayout = await page.evaluate(() => ({
+      viewport: document.documentElement.clientWidth,
+      document: document.documentElement.scrollWidth
+    }));
+    if (homeLayout.document > homeLayout.viewport) {
+      throw new Error(`Home screen overflows horizontally at 320px: ${JSON.stringify(homeLayout)}`);
+    }
+    await openScreen(page, 'settings');
     await page.locator('#offline-mode-setting').selectOption('offline-only');
-    await page.locator('.nav-item[data-screen="chat"]').click();
+    await openScreen(page, 'chat');
     const requestsBeforeMemoryCommands = apiRequests.length;
     await page.locator('#chat-input').fill('What do you remember about me?');
     await page.locator('#send-message').click();
@@ -1215,26 +1405,26 @@ async function main() {
     }
     await page.evaluate(() => localStorage.removeItem('zerogravity.local.memory'));
     await page.locator('#private-conversation-mode').uncheck();
-    await page.locator('.nav-item[data-screen="modules"]').evaluate((button) => button.click());
+    await openScreen(page, 'modules');
     await page.getByRole('button', { name: 'Open Memory and Personalization' }).click();
     await page.locator('#memory-enabled').evaluate((input) => {
       input.checked = false;
       input.dispatchEvent(new Event('change', { bubbles: true }));
     });
-    await page.locator('.nav-item[data-screen="chat"]').evaluate((button) => button.click());
+    await openScreen(page, 'chat');
     await page.locator('#chat-input').fill('Remember this: a memory while disabled.');
     await page.locator('#send-message').click();
     await page.locator('.chat-message.assistant .chat-message-content').last().getByText('Memory is turned off', { exact: false }).waitFor();
     if (JSON.parse(await page.evaluate(() => localStorage.getItem('zerogravity.memory.v1'))).memories.length !== memoryCountBeforePrivate) {
       throw new Error('Disabled memory must not save chat commands');
     }
-    await page.locator('.nav-item[data-screen="settings"]').evaluate((button) => button.click());
+    await openScreen(page, 'settings');
     await page.locator('#offline-mode-setting').selectOption('automatic');
     const chatProviderCard = page.locator('.provider-function-card[data-function="chat-ai"]');
     await chatProviderCard.getByRole('button', { name: 'Edit configuration' }).click();
     await page.locator('#provider-key').fill('test-key-not-a-real-secret');
     await page.locator('#save-provider').click();
-    await page.locator('.nav-item[data-screen="modules"]').evaluate((button) => button.click());
+    await openScreen(page, 'modules');
     await page.getByRole('button', { name: 'Open Memory and Personalization' }).click();
     for (const id of ['memory-enabled', 'personalization-enabled', 'online-memory-enabled', 'calm-mode-enabled']) {
       await page.locator(`#${id}`).evaluate((input) => {
@@ -1246,7 +1436,7 @@ async function main() {
       throw new Error('Calm Mode should slow supported speech output without overwriting the saved speech-rate preference');
     }
     await page.locator('#memory-list .memory-card input[type="checkbox"]').check();
-    await page.locator('.nav-item[data-screen="chat"]').evaluate((button) => button.click());
+    await openScreen(page, 'chat');
     await page.locator('#chat-input').fill('Please use my approved workspace preference.');
     await page.locator('#send-message').click();
     await page.waitForFunction(() => !document.querySelector('#send-message').disabled, null, { timeout: 10000 });
@@ -1263,13 +1453,13 @@ async function main() {
     await page.locator('#private-conversation-mode').check();
     await page.locator('#chat-input').fill('Please respond privately without personalization.');
     await page.locator('#send-message').click();
-    await page.getByText(`Mock provider response ${privateResponseNumber}`).waitFor();
+    await page.locator('#chat-messages').getByText(`Mock provider response ${privateResponseNumber}`).waitFor();
     if (JSON.stringify(apiRequests.at(-1).payload.messages).includes('I prefer a quiet workspace.')
       || JSON.stringify(apiRequests.at(-1).payload.messages).includes('Use Calm Mode')) {
       throw new Error('Private conversations must not send saved memory to an online provider');
     }
     await page.locator('#private-conversation-mode').uncheck();
-    await page.locator('.nav-item[data-screen="modules"]').evaluate((button) => button.click());
+    await openScreen(page, 'modules');
     await page.getByRole('button', { name: 'Open Memory and Personalization' }).click();
     await page.locator('#reset-personalization').click();
     await page.getByText('online-sharing approvals were reset', { exact: false }).waitFor();
@@ -1301,7 +1491,7 @@ async function main() {
       || restoredLiveProviderOptions.weather.apiKey) {
       throw new Error(`Non-secret live-data mappings should persist without credentials: ${JSON.stringify(restoredLiveProviderOptions)}; stored=${await reloadedPage.evaluate(() => localStorage.getItem('zerogravity.api.providers'))}`);
     }
-    await reloadedPage.locator('.nav-item[data-screen="settings"]').click();
+    await openScreen(reloadedPage, 'settings');
     const savedImageProviderCard = reloadedPage.locator('.provider-function-card[data-function="image-generation"]');
     await savedImageProviderCard.getByRole('button', { name: 'Edit configuration' }).click();
     const reloadedRequestSettings = JSON.parse(await reloadedPage.locator('#provider-request-settings').inputValue());
@@ -1310,7 +1500,7 @@ async function main() {
       || (await reloadedPage.locator('#provider-key-status').innerText()).includes('present in memory')) {
       throw new Error(`The image provider type/options should persist while its API key remains session-only: type=${await reloadedPage.locator('#provider-type-select').inputValue()}, options=${JSON.stringify(reloadedRequestSettings)}, key=${await reloadedPage.locator('#provider-key-status').innerText()}`);
     }
-    await reloadedPage.locator('.nav-item[data-screen="modules"]').click();
+    await openScreen(reloadedPage, 'modules');
     await reloadedPage.getByRole('button', { name: 'Open Image Generator' }).click();
     if (await reloadedPage.locator('#image-quality').isDisabled()
       || !(await reloadedPage.locator('#image-provider-status').innerText()).includes('Enter its API key')) {
@@ -1331,6 +1521,7 @@ async function main() {
       liveDataScriptCount,
       liveDataUIScriptCount,
       voiceScriptCount,
+      voiceSettingsScriptCount,
       phoneActionScriptCount,
       navTexts,
       orbMetrics,

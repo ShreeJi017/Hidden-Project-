@@ -1,6 +1,7 @@
 package com.zerogravity.android
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -8,6 +9,7 @@ import android.widget.Toast
 import android.webkit.GeolocationPermissions
 import android.webkit.WebChromeClient
 import android.webkit.PermissionRequest
+import android.webkit.ValueCallback
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -19,6 +21,7 @@ class MainActivity : Activity() {
     private lateinit var webView: WebView
     private lateinit var permissionManager: PermissionManager
     private lateinit var phoneActionBridge: AndroidPhoneActionsBridge
+    private var fileChooserCallback: ValueCallback<Array<Uri>>? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -56,6 +59,35 @@ class MainActivity : Activity() {
             settings.javaScriptCanOpenWindowsAutomatically = false
             settings.setSupportMultipleWindows(false)
             webChromeClient = object : WebChromeClient() {
+                override fun onShowFileChooser(
+                    webView: WebView?,
+                    filePathCallback: ValueCallback<Array<Uri>>,
+                    fileChooserParams: FileChooserParams
+                ): Boolean {
+                    if (webView?.url?.startsWith(TRUSTED_PAGE_PREFIX) != true) {
+                        filePathCallback.onReceiveValue(null)
+                        return false
+                    }
+                    fileChooserCallback?.onReceiveValue(null)
+                    fileChooserCallback = filePathCallback
+                    return try {
+                        startActivityForResult(
+                            fileChooserParams.createIntent(),
+                            FILE_CHOOSER_REQUEST_CODE
+                        )
+                        true
+                    } catch (_: ActivityNotFoundException) {
+                        fileChooserCallback = null
+                        filePathCallback.onReceiveValue(null)
+                        Toast.makeText(
+                            this@MainActivity,
+                            "No Android app could open the file picker.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                        true
+                    }
+                }
+
                 override fun onPermissionRequest(request: PermissionRequest) {
                     runOnUiThread {
                         if (!isTrustedOrigin(request.origin)
@@ -178,6 +210,23 @@ class MainActivity : Activity() {
         }
     }
 
+    @Deprecated("Use Activity Result APIs when migrating the host Activity.")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        if (requestCode == FILE_CHOOSER_REQUEST_CODE) {
+            val callback = fileChooserCallback
+            fileChooserCallback = null
+            callback?.onReceiveValue(
+                if (resultCode == RESULT_OK && data != null) {
+                    WebChromeClient.FileChooserParams.parseResult(resultCode, data)
+                } else {
+                    null
+                }
+            )
+            return
+        }
+        super.onActivityResult(requestCode, resultCode, data)
+    }
+
     @Deprecated("Use the Android back dispatcher when migrating the host Activity.")
     override fun onBackPressed() {
         if (::webView.isInitialized && webView.canGoBack()) webView.goBack()
@@ -191,6 +240,8 @@ class MainActivity : Activity() {
 
     override fun onDestroy() {
         permissionManager.clearPendingRequest()
+        fileChooserCallback?.onReceiveValue(null)
+        fileChooserCallback = null
         if (::webView.isInitialized) {
             webView.removeJavascriptInterface("ZeroGravityNativePhoneActions")
             webView.removeJavascriptInterface("ZeroGravityNativeImages")
@@ -203,6 +254,7 @@ class MainActivity : Activity() {
     companion object {
         private const val TRUSTED_PAGE_URL = "https://appassets.androidplatform.net/assets/zerogravity/index.html"
         private const val TRUSTED_PAGE_PREFIX = "https://appassets.androidplatform.net/assets/zerogravity/"
+        private const val FILE_CHOOSER_REQUEST_CODE = 7402
     }
 
     private fun isTrustedOrigin(uri: Uri): Boolean =

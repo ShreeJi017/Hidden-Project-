@@ -35,6 +35,7 @@ val bundleZeroGravityWebApp by tasks.registering(Sync::class) {
             "app.js",
             "ai-provider.js",
             "voice-services.js",
+            "voice-settings.js",
             "offline-services.js",
             "memory-services.js",
             "memory-ui.js",
